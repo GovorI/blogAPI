@@ -34,6 +34,9 @@ export const postRepository = {
     if (!blog) {
       return false;
     }
+    if (postIndex === -1) {
+      return false;
+    }
     const updatedPost = {
       ...db.posts[postIndex],
       ...newPostData,
