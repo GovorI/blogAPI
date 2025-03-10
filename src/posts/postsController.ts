@@ -30,7 +30,7 @@ const postsController = {
     const newPost = postRepository.create(req.body);
     if (newPost) {
       res.status(201).send(newPost);
-    } else res.sendStatus(400);
+    } else res.sendStatus(404);
     // .json({ errorsMessages: [{}] });
   },
   update: (req: Request, res: Response) => {
