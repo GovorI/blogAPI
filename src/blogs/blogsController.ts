@@ -27,7 +27,7 @@ const blogsController = {
 
     const updatedBlog = blogRepository.update(blogId, updateData);
     if (!updatedBlog) {
-      res.sendStatus(400);
+      res.sendStatus(404);
       return;
     }
 
