@@ -42,24 +42,24 @@ export const blogIdValidator = param("id")
     return true;
   });
 
-export const findBlogValidator = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const blog = blogRepository.getById(req.body.blogId);
-  if (blog) {
-    next();
-  } else
-    res.status(400).json({
-      errorsMessages: [{ field: "blogId", message: "Blog not found" }],
-    });
-  // if (!blog) {
-  //   req.errors = req.errors || [];
-  //   req.errors.push({ field: "blogId", message: "Blog not found" });
-  // }
-  // next();
-};
+// export const findBlogValidator = (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   const blog = blogRepository.getById(req.body.blogId);
+//   if (blog) {
+//     next();
+//   } else
+//     res.status(400).json({
+//       errorsMessages: [{ field: "blogId", message: "Blog not found" }],
+//     });
+// if (!blog) {
+//   req.errors = req.errors || [];
+//   req.errors.push({ field: "blogId", message: "Blog not found" });
+// }
+// next();
+// };
 
 export const checkBlogExistenceForPost = body("blogId").custom(
   async (blogId) => {

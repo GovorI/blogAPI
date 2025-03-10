@@ -3,7 +3,7 @@ import { blogRepository } from "./blogRepository";
 import {
   blogIdValidator,
   descriptionValidator,
-  // findBlogValidator,
+  checkBlogExistenceForPost,
   nameValidator,
   websiteUrlValidator,
 } from "../validators/blogValidators";
@@ -54,7 +54,8 @@ blogsRouter.get("/", blogsController.getBlogs);
 blogsRouter.get(
   "/:id",
   blogIdValidator,
-  // findBlogValidator,
+  checkBlogExistenceForPost,
+  inputCheckErrorsMiddleware,
   blogsController.getById
 );
 blogsRouter.post(
@@ -73,7 +74,7 @@ blogsRouter.put(
   descriptionValidator,
   websiteUrlValidator,
   blogIdValidator,
-  // findBlogValidator,
+  checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   blogsController.update
 );

@@ -7,10 +7,7 @@ import {
   shortDescriptionValidator,
 } from "../validators/postValidators";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
-import {
-  checkBlogExistenceForPost,
-  findBlogValidator,
-} from "../validators/blogValidators";
+import { checkBlogExistenceForPost } from "../validators/blogValidators";
 import { authMiddleware } from "../validators/authValidator";
 
 export const postsRouter = Router();
@@ -63,7 +60,6 @@ postsRouter.post(
   contentInputValidator,
   blogIdValidator,
   checkBlogExistenceForPost,
-  // findBlogValidator, // проверяем есть ли блог
   inputCheckErrorsMiddleware,
   postsController.create
 );
@@ -75,7 +71,6 @@ postsRouter.put(
   contentInputValidator,
   blogIdValidator,
   checkBlogExistenceForPost,
-  // findBlogValidator, // проверяем есть ли блог
   inputCheckErrorsMiddleware,
   postsController.update
 );
