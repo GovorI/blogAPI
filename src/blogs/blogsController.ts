@@ -23,7 +23,13 @@ const blogsController = {
   },
   update: (req: Request, res: Response) => {
     const blogId = req.params.id;
+    const blog = blogRepository.getById(blogId);
     const updateData = req.body;
+
+    if (!blog) {
+      res.status(404).send();
+      return;
+    }
 
     const updatedBlog = blogRepository.update(blogId, updateData);
     if (!updatedBlog) {
@@ -43,6 +49,12 @@ const blogsController = {
     } else res.status(200).send(blog);
   },
   deleteById: (req: Request, res: Response) => {
+    const blogId = req.params.id;
+    const blog = blogRepository.getById(blogId);
+    if (!blog) {
+      res.status(404).send();
+      return;
+    }
     const isDel = blogRepository.deleteById(req.params.id);
     if (isDel) {
       res.sendStatus(204);
@@ -68,7 +80,6 @@ blogsRouter.put(
   descriptionValidator,
   websiteUrlValidator,
   blogIdValidator,
-  checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   blogsController.update
 );
