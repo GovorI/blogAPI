@@ -27,7 +27,7 @@ const blogsController = {
     const updateData = req.body;
 
     if (!blog) {
-      res.status(404).send();
+      res.sendStatus(404);
       return;
     }
 
