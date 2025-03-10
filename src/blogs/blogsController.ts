@@ -51,12 +51,7 @@ const blogsController = {
 };
 
 blogsRouter.get("/", blogsController.getBlogs);
-blogsRouter.get(
-  "/:id",
-  blogIdValidator,
-  inputCheckErrorsMiddleware,
-  blogsController.getById
-);
+blogsRouter.get("/:id", blogsController.getById);
 blogsRouter.post(
   "/",
   authMiddleware,
