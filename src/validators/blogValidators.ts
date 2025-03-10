@@ -35,12 +35,12 @@ export const blogIdValidator = param("id")
   .notEmpty()
   .isString()
   .withMessage("not string")
-  .trim()
-  .custom((id) => {
-    const blog = blogRepository.getById(id);
-    if (!blog) throw new Error("Blog not found");
-    return true;
-  });
+  .trim();
+// .custom((id) => {
+//   const blog = blogRepository.getById(id);
+//   if (!blog) throw new Error("Blog not found");
+//   return true;
+// });
 
 export const checkBlogExistenceForPost = body("blogId").custom(
   async (blogId) => {
