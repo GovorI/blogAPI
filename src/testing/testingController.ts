@@ -11,4 +11,4 @@ const testController = {
   },
 };
 
-testRouter.delete(`/all-data`, testController.setDB);
+testRouter.delete(`/`, testController.setDB);
