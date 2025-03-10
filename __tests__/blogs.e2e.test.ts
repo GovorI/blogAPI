@@ -11,7 +11,7 @@ const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
 describe(APIBLOGS, () => {
   beforeAll(async () => {
-    await req.delete(`${SETTINGS.PATH.TESTING}/all-data`).expect(204);
+    await req.delete(`${SETTINGS.PATH.TESTING}`).expect(204);
   });
 
   afterAll(async () => {});
