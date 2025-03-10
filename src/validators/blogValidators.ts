@@ -61,18 +61,12 @@ export const findBlogValidator = (
   // next();
 };
 
-export const checkBlogExistenceForPost = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const blogId = req.body.blogId;
-  const blog = blogRepository.getById(blogId);
-
-  if (!blog) {
-    // Добавляем ошибку в req.errors
-    req.errors = req.errors || [];
-    req.errors.push({ field: "blogId", message: "Blog not found" });
+export const checkBlogExistenceForPost = body("blogId").custom(
+  async (blogId) => {
+    const blog = await blogRepository.getById(blogId);
+    if (!blog) {
+      throw new Error("blog not found");
+    }
+    return true;
   }
-  next();
-};
+);

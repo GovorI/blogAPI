@@ -62,7 +62,7 @@ postsRouter.post(
   shortDescriptionValidator,
   contentInputValidator,
   blogIdValidator,
-  // checkBlogExistenceForPost,
+  checkBlogExistenceForPost,
   // findBlogValidator, // проверяем есть ли блог
   inputCheckErrorsMiddleware,
   postsController.create
