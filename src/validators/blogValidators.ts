@@ -42,6 +42,16 @@ export const blogIdValidator = param("id")
     return true;
   });
 
+export const checkBlogExistenceForPost = body("blogId").custom(
+  async (blogId) => {
+    const blog = await blogRepository.getById(blogId);
+    if (!blog) {
+      throw new Error("blog not found");
+    }
+    return true;
+  }
+);
+
 // export const findBlogValidator = (
 //   req: Request,
 //   res: Response,
@@ -60,13 +70,3 @@ export const blogIdValidator = param("id")
 // }
 // next();
 // };
-
-export const checkBlogExistenceForPost = body("blogId").custom(
-  async (blogId) => {
-    const blog = await blogRepository.getById(blogId);
-    if (!blog) {
-      throw new Error("blog not found");
-    }
-    return true;
-  }
-);

@@ -54,7 +54,6 @@ blogsRouter.get("/", blogsController.getBlogs);
 blogsRouter.get(
   "/:id",
   blogIdValidator,
-  checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   blogsController.getById
 );
