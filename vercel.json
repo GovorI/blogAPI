@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 2,
     "name": "blog_api",
     "builds": [
         {"src": "src/index.ts", "use": "@vercel/node"}
