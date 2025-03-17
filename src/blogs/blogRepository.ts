@@ -1,4 +1,5 @@
-import { blogViewModel, db } from "../db/db";
+import { ObjectId } from "mongodb";
+import { blogsCollection, blogViewModel } from "../db/db_connection";
 
 export type createBlogDTO = {
   name: string;
@@ -7,39 +8,57 @@ export type createBlogDTO = {
 };
 
 export const blogRepository = {
-  getAll: () => {
-    return db.blogs;
+  getAll: async (): Promise<blogViewModel[]> => {
+    return blogsCollection.find({}).toArray();
   },
-  getById: (id: string) => {
-    return db.blogs.find((b) => b.id === id);
+  getById: async (id: string) => {
+    try {
+      const result = await blogsCollection.findOne({ _id: new ObjectId(id) });
+
+      if (!result) {
+        return null;
+      }
+
+      return {
+        _id: result._id.toString(),
+        name: result.name,
+        description: result.description,
+        websiteUrl: result.websiteUrl,
+        createdAt: result.createdAt.toISOString(),
+        isMembership: result.isMembership || false,
+      };
+    } catch (error) {
+      // console.error("Invalid ID format:", error);
+      return null;
+    }
   },
-  create: (blogData: createBlogDTO) => {
-    const newBlog: blogViewModel = {
-      id: new Date().toISOString(),
+  create: async (blogData: createBlogDTO) => {
+    const newBlog = {
       ...blogData,
+      createdAt: new Date(),
+      isMembership: false,
     };
-    db.blogs.push(newBlog);
-    return newBlog;
+    const result = await blogsCollection.insertOne(newBlog);
+    console.log(result);
+    return {
+      _id: result.insertedId.toString(),
+      ...newBlog,
+      createdAt: newBlog.createdAt.toISOString(),
+    };
   },
-  update: (blogId: string, newBlogData: createBlogDTO) => {
-    const blogIndex = db.blogs.findIndex((b) => b.id === blogId);
-    if (blogIndex === -1) {
+  update: async (blogId: string, newBlogData: createBlogDTO) => {
+    try {
+      const result = await blogsCollection.updateOne(
+        { _id: new ObjectId(blogId) },
+        { $set: newBlogData }
+      );
+      return result.modifiedCount === 1;
+    } catch (error) {
       return false;
     }
-    const updatedBlog = {
-      ...db.blogs[blogIndex],
-      ...newBlogData,
-    };
-
-    db.blogs[blogIndex] = updatedBlog;
-    return updatedBlog;
   },
-  deleteById: (id: string) => {
-    const index = db.blogs.findIndex((b) => b.id === id);
-    if (index > -1) {
-      db.blogs.splice(index, 1);
-      return true;
-    }
-    return false;
+  deleteById: async (id: string) => {
+    const result = await blogsCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
   },
 };

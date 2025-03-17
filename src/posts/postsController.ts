@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
 import { postRepository } from "./postRepository";
 import {
-  blogIdValidator,
   contentInputValidator,
+  postIdValidator,
   postTitleInputValidator,
+  blogIdValidator,
   shortDescriptionValidator,
 } from "../validators/postValidators";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
@@ -13,45 +14,78 @@ import { authMiddleware } from "../validators/authValidator";
 export const postsRouter = Router();
 
 const postsController = {
-  getAll: (req: Request, res: Response) => {
-    const posts = postRepository.getAll();
-    res.status(200).send(posts);
+  getAll: async (req: Request, res: Response) => {
+    try {
+      const posts = await postRepository.getAll();
+      res.status(200).send(posts);
+    } catch (error) {
+      res.status(500).send("Internal server error");
+    }
   },
-  getById: (req: Request, res: Response) => {
-    const post = postRepository.getById(req.params.id);
-    if (post) {
-      res.status(200).send(post);
-    } else res.sendStatus(404);
-  },
-  create: (req: Request, res: Response) => {
-    const newPost = postRepository.create(req.body);
-    if (newPost) {
-      res.status(201).send(newPost);
-    } else res.sendStatus(404);
-    // .json({ errorsMessages: [{}] });
-  },
-  update: (req: Request, res: Response) => {
-    const postId = req.params.id;
-    const updateData = req.body;
+  getById: async (req: Request, res: Response) => {
+    try {
+      const post = await postRepository.getById(req.params.id);
+      if (!post) {
+        res.status(404).json({
+          errorsMessages: [{ field: "id", message: "post not found" }],
+        });
+        return;
+      }
+      // const mappedPost = {
+      //   id: post._id.toString()
+      // }
 
-    const updatedPost = postRepository.update(postId, updateData);
-    if (!updatedPost) {
+      res.status(200).send(post);
+    } catch (error) {
+      res.status(500).send("Internal server error");
+    }
+  },
+  create: async (req: Request, res: Response) => {
+    try {
+      const newPost = await postRepository.create(req.body);
+      if (newPost) {
+        res.status(201).send(newPost);
+        return;
+      }
       res.sendStatus(404);
       return;
+    } catch (error) {
+      res.status(500).send("Internal server error");
     }
-
-    res.status(204).send(updatedPost);
   },
-  deleteById: (req: Request, res: Response) => {
-    const isDeleted = postRepository.deleteById(req.params.id);
-    if (isDeleted) {
+  update: async (req: Request, res: Response) => {
+    try {
+      const postId = req.params.id;
+      const updateData = req.body;
+
+      const updatedPost = await postRepository.update(postId, updateData);
+      if (!updatedPost) {
+        res.sendStatus(404);
+        return;
+      }
       res.sendStatus(204);
-    } else res.sendStatus(404);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Internal server error");
+    }
+  },
+  deleteById: async (req: Request, res: Response) => {
+    try {
+      const isDeleted = await postRepository.deleteById(req.params.id);
+      if (isDeleted) {
+        res.sendStatus(204);
+        return;
+      }
+      res.sendStatus(404);
+      return;
+    } catch (error) {
+      res.status(500).send("Internal server error");
+    }
   },
 };
 
 postsRouter.get("/", postsController.getAll);
-postsRouter.get("/:id", postsController.getById);
+postsRouter.get("/:id", postIdValidator, postsController.getById);
 postsRouter.post(
   "/",
   authMiddleware,
@@ -66,12 +100,19 @@ postsRouter.post(
 postsRouter.put(
   "/:id",
   authMiddleware,
+  postIdValidator,
+  blogIdValidator,
   postTitleInputValidator,
   shortDescriptionValidator,
   contentInputValidator,
-  blogIdValidator,
   checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   postsController.update
 );
-postsRouter.delete("/:id", authMiddleware, postsController.deleteById);
+postsRouter.delete(
+  "/:id",
+  authMiddleware,
+  postIdValidator,
+  inputCheckErrorsMiddleware,
+  postsController.deleteById
+);

@@ -1,4 +1,9 @@
-import { blogViewModel, db, postViewModel } from "../src/db/db";
+import {
+  blogViewModel,
+  client,
+  postViewModel,
+  runDb,
+} from "../src/db/db_connection";
 import { req } from "../helpers/test_helpers";
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { SETTINGS } from "../src/settings";
@@ -10,23 +15,17 @@ import { utf8ToBase64 } from "../src/validators/authValidator";
 //   "content": "string",
 //   "blogId": "string"
 // }
-
-const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
-
-let newBlog: blogViewModel = {
-  id: "string",
-  name: "Test Blog",
-  description: "Test description",
-  websiteUrl: "https://test.com",
-};
-
-let newPost: postViewModel = db.posts[0];
-
 const APIPOSTS = SETTINGS.PATH.POSTS;
+describe(`${APIPOSTS}`, () => {
+  const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
-describe(APIPOSTS, () => {
+  let newBlog: blogViewModel;
+  let newPost: postViewModel;
+
   beforeAll(async () => {
-    await req.delete(`${SETTINGS.PATH.TESTING}/all-data`).expect(204);
+    await runDb();
+
+    await req.delete(`${SETTINGS.PATH.TESTING}`).expect(204);
 
     const resBlog = await req
       .post(SETTINGS.PATH.BLOGS)
@@ -34,13 +33,17 @@ describe(APIPOSTS, () => {
         name: "Test Blog",
         description: "Test description",
         websiteUrl: "https://test.com",
+        isMembership: false,
       })
       .set({ authorization: "Basic " + adminBase64 });
     expect(resBlog.status).toBe(201);
     newBlog = resBlog.body;
+    console.log("Created newBlog for test Posts --------> ", newBlog);
   });
 
-  afterAll(async () => {});
+  afterAll(async () => {
+    await client.close();
+  });
 
   it("GET posts = []", async () => {
     await req.get(APIPOSTS).expect([]);
@@ -81,19 +84,23 @@ describe(APIPOSTS, () => {
         title: "My Blog",
         shortDescription: "Interest blog about my life",
         content: "blabla bla ololo",
-        blogId: newBlog.id,
-        blogName: newBlog.name,
+        blogId: newBlog._id.toString(),
+        blogName: newBlog.name.toString(),
       })
       .expect(201);
     newPost = res.body;
-    console.log(newPost);
-    expect(res.body).toEqual({
-      id: expect.any(String),
+    if (!newPost) {
+      throw new Error("newPost is undefined. Check the previous test.");
+    }
+    console.log("Created post:", newPost);
+    expect(res.body).toMatchObject({
+      _id: expect.any(String),
       title: "My Blog",
       shortDescription: "Interest blog about my life",
       content: "blabla bla ololo",
-      blogId: newBlog.id,
+      blogId: newBlog._id.toString(),
       blogName: newBlog.name,
+      createdAt: expect.any(String),
     });
   });
 
@@ -101,13 +108,12 @@ describe(APIPOSTS, () => {
     await req.get(`${APIPOSTS}/1000`).expect(404);
   });
   it("+ GET post by ID with correct id", async () => {
-    console.log(newPost.id);
-    await req.get(`${APIPOSTS}/${newPost.id}`).expect(200, newPost);
+    await req.get(`${APIPOSTS}/${newPost._id}`).expect(200, newPost);
   });
 
   it("- PUT post by ID with incorrect data", async () => {
     await req
-      .put(`${APIPOSTS}/${newPost.id}`)
+      .put(`${APIPOSTS}/${newPost._id}`)
       .set({ authorization: "Basic " + adminBase64 })
       .send({
         title: `My BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy 
@@ -116,7 +122,7 @@ describe(APIPOSTS, () => {
            BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy Blog`,
         shortDescription: 42,
         content: 3.14,
-        blogId: newBlog.id,
+        blogId: newBlog._id.toString(),
       })
       .expect(400);
 
@@ -126,45 +132,48 @@ describe(APIPOSTS, () => {
 
   it("+ PUT post by ID with correct data", async () => {
     await req
-      .put(`${APIPOSTS}/${newPost.id}`)
+      .put(`${APIPOSTS}/${newPost._id.toString()}`)
       .set({ authorization: "Basic " + adminBase64 })
       .send({
-        id: newPost.id,
         title: "My Blog",
         shortDescription: "Interest blog about my life",
-        content: "blabla bla ololo",
-        blogId: newBlog.id,
+        content: "blabla bla ololo lol",
+        blogId: newBlog._id.toString(),
         blogName: newBlog.name,
       })
       .expect(204);
 
     const res = await req.get(`${APIPOSTS}`);
     expect(res.body[0]).toEqual({
-      id: newPost.id,
+      _id: newPost._id.toString(),
       title: "My Blog",
       shortDescription: "Interest blog about my life",
-      content: "blabla bla ololo",
-      blogId: newBlog.id,
+      content: "blabla bla ololo lol",
+      blogId: newBlog._id,
       blogName: newBlog.name,
+      createdAt: expect.any(String),
     });
     newPost = res.body[0];
-    console.log(newPost + "+ PUT blog by ID with correct data");
   });
 
   it("- DELETE post by incorrect ID", async () => {
-    console.log(db.blogs);
     await req
       .set({ authorization: "Basic " + adminBase64 })
       .delete(`${APIPOSTS}/876328`)
-      .expect(404);
+      .expect(400);
   });
   it("+ DELETE post by correct ID", async () => {
     console.log(newPost);
     await req
       .set({ authorization: "Basic " + adminBase64 })
-      .delete(`${APIPOSTS}/${newPost.id}`);
+      .delete(`${APIPOSTS}/${newPost._id}`)
+      .expect(204);
 
     const res = await req.get(APIPOSTS);
     expect(res.body.length).toBe(0);
+    await req
+      .set({ authorization: "Basic " + adminBase64 })
+      .delete(`${APIPOSTS}/${newPost._id}`)
+      .expect(404);
   });
 });

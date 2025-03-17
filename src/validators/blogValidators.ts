@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { body, param } from "express-validator";
 import { blogRepository } from "../blogs/blogRepository";
+import { isValidObjectId } from "mongoose";
 
 export const nameValidator = body("name")
   .notEmpty()
@@ -35,12 +36,13 @@ export const blogIdValidator = param("id")
   .notEmpty()
   .isString()
   .withMessage("not string")
-  .trim();
-// .custom((id) => {
-//   const blog = blogRepository.getById(id);
-//   if (!blog) throw new Error("Blog not found");
-//   return true;
-// });
+  .trim()
+  // .isMongoId();
+  .custom((id) => {
+    if (!isValidObjectId(id)) throw new Error("Invalid Id format");
+    return true;
+  })
+  .withMessage("Provided ID is not valid");
 
 export const checkBlogExistenceForPost = body("blogId").custom(
   async (blogId) => {
@@ -51,22 +53,3 @@ export const checkBlogExistenceForPost = body("blogId").custom(
     return true;
   }
 );
-
-// export const findBlogValidator = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const blog = blogRepository.getById(req.body.blogId);
-//   if (blog) {
-//     next();
-//   } else
-//     res.status(400).json({
-//       errorsMessages: [{ field: "blogId", message: "Blog not found" }],
-//     });
-// if (!blog) {
-//   req.errors = req.errors || [];
-//   req.errors.push({ field: "blogId", message: "Blog not found" });
-// }
-// next();
-// };

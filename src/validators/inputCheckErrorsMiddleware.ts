@@ -14,14 +14,12 @@ export const inputCheckErrorsMiddleware = (
   next: NextFunction
 ) => {
   const e = validationResult(req);
-  // const customErrors = req.errors || [];
-  // const allErrors = [];
   if (!e.isEmpty()) {
     const eArray = e.array({ onlyFirstError: true }) as {
       path: FieldNamesType;
       msg: string;
     }[];
-    console.log(eArray);
+    // console.log(eArray);
 
     res.status(400).json({
       errorsMessages: eArray.map((x) => ({ field: x.path, message: x.msg })),

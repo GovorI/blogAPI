@@ -29,7 +29,6 @@ export const authMiddleware = (
   const auth = authHeader.toString();
 
   const [authType, code] = auth.trim().split(" ");
-  console.log(auth);
 
   if (!authType || !code || authType.toLowerCase() !== "basic") {
     res.status(401).json({});
@@ -37,7 +36,6 @@ export const authMiddleware = (
   }
 
   const adminAuth = utf8ToBase64(ADMIN_AUTH);
-  console.log("auth--------" + adminAuth, code);
 
   if (adminAuth !== code) {
     res.status(401).json({});

@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import { blogRepository } from "../blogs/blogRepository";
-import { isEmpty } from "class-validator";
+import { isValidObjectId } from "mongoose";
 
 export const postTitleInputValidator = body("title")
   .notEmpty()
@@ -35,4 +34,21 @@ export const blogIdValidator = body("blogId")
   .withMessage("blogId is required")
   .isString()
   .withMessage("not string")
-  .trim();
+  .trim()
+  // .isMongoId()
+  .custom(async (blogId) => {
+    if (!isValidObjectId(blogId)) throw new Error('"Invalid Id format"');
+    const blog = await blogRepository.getById(blogId);
+    if (!blog) throw new Error("blog not found");
+  });
+
+export const postIdValidator = param("id")
+  .notEmpty()
+  .isString()
+  .withMessage("not string")
+  .trim()
+  .custom((id) => {
+    if (!isValidObjectId(id)) throw new Error("Invalid Id format");
+    return true;
+  })
+  .withMessage("Provided ID is not valid");

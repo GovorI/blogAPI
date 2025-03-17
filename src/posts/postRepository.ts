@@ -1,5 +1,6 @@
+import { ObjectId } from "mongodb";
 import { blogRepository } from "../blogs/blogRepository";
-import { db } from "../db/db";
+import { postsCollection } from "../db/db_connection";
 
 export type createPostDTO = {
   title: string;
@@ -9,49 +10,54 @@ export type createPostDTO = {
 };
 
 export const postRepository = {
-  getAll: () => {
-    return db.posts;
+  getAll: async () => {
+    return postsCollection.find({}).toArray();
   },
-  getById: (id: string) => {
-    return db.posts.find((p) => p.id === id);
+  getById: async (id: string) => {
+    try {
+      const result = await postsCollection.findOne({ _id: new ObjectId(id) });
+      if (!result) return null;
+      return {
+        _id: result._id.toString(),
+        title: result.title,
+        shortDescription: result.shortDescription,
+        content: result.content,
+        blogId: result.blogId.toString(),
+        blogName: result.blogName,
+        createdAt: result.createdAt.toISOString(),
+      };
+    } catch (error) {
+      return null;
+    }
   },
-  create: (postData: createPostDTO) => {
-    const blog = blogRepository.getById(postData.blogId);
+  create: async (postData: createPostDTO) => {
+    const blog = await blogRepository.getById(postData.blogId);
     if (!blog) {
       return false;
     }
     const newPost = {
-      id: new Date().toISOString(),
       ...postData,
       blogName: blog.name,
-    };
-    db.posts.push(newPost);
-    return newPost;
-  },
-  update: (postId: string, newPostData: createPostDTO) => {
-    const postIndex = db.posts.findIndex((p) => p.id === postId);
-    const blog = blogRepository.getById(newPostData.blogId);
-    if (!blog) {
-      return false;
-    }
-    if (postIndex === -1) {
-      return false;
-    }
-    const updatedPost = {
-      ...db.posts[postIndex],
-      ...newPostData,
-      blogName: blog.name,
+      createdAt: new Date(),
     };
 
-    db.posts[postIndex] = updatedPost;
-    return updatedPost;
+    const result = await postsCollection.insertOne(newPost);
+    return {
+      _id: result.insertedId.toString(),
+      ...newPost,
+      createdAt: newPost.createdAt.toISOString(),
+    };
   },
-  deleteById: (id: string) => {
-    const index = db.posts.findIndex((p) => p.id === id);
-    if (index > -1) {
-      db.posts.splice(index, 1);
-      return true;
-    }
-    return false;
+  update: async (postId: string, newPostData: createPostDTO) => {
+    const result = await postsCollection.updateOne(
+      { _id: new ObjectId(postId) },
+      { $set: newPostData }
+    );
+
+    return result.matchedCount === 1;
+  },
+  deleteById: async (id: string) => {
+    const result = await postsCollection.deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
   },
 };
