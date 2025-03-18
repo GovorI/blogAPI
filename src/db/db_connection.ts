@@ -5,7 +5,7 @@ const mongoUri = SETTINGS.MONGODB;
 
 export const client = new MongoClient(mongoUri);
 
-export type blogViewModel = {
+export type blogSchema = {
   _id: string;
   name: string;
   description: string;
@@ -14,7 +14,7 @@ export type blogViewModel = {
   isMembership: boolean;
 };
 
-export type postViewModel = {
+export type postSchema = {
   _id: string;
   title: string;
   shortDescription: string;
@@ -24,13 +24,32 @@ export type postViewModel = {
   createdAt: string;
 };
 
+export type blogViewModel = {
+  id: string;
+  name: string;
+  description: string;
+  websiteUrl: string;
+  createdAt: string;
+  isMembership: boolean;
+};
+
+export type postViewModel = {
+  id: string;
+  title: string;
+  shortDescription: string;
+  content: string;
+  blogId: string;
+  blogName: string;
+  createdAt: string;
+};
+
 type dbType = {
-  blogs: Array<blogViewModel>;
+  blogs: Array<blogSchema>;
   posts: Array<postViewModel>;
 };
 
 export type ReadonlyDBType = {
-  blogs: Readonly<blogViewModel[]>;
+  blogs: Readonly<blogSchema[]>;
   posts: Readonly<postViewModel[]>;
 };
 

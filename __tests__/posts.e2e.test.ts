@@ -65,10 +65,6 @@ describe(`${APIPOSTS}`, () => {
             field: "content",
             message: "content is required",
           },
-          {
-            field: "blogId",
-            message: "blogId is required",
-          },
         ],
       });
 
@@ -84,7 +80,7 @@ describe(`${APIPOSTS}`, () => {
         title: "My Blog",
         shortDescription: "Interest blog about my life",
         content: "blabla bla ololo",
-        blogId: newBlog._id.toString(),
+        blogId: newBlog.id.toString(),
         blogName: newBlog.name.toString(),
       })
       .expect(201);
@@ -94,11 +90,11 @@ describe(`${APIPOSTS}`, () => {
     }
     console.log("Created post:", newPost);
     expect(res.body).toMatchObject({
-      _id: expect.any(String),
+      id: expect.any(String),
       title: "My Blog",
       shortDescription: "Interest blog about my life",
       content: "blabla bla ololo",
-      blogId: newBlog._id.toString(),
+      blogId: newBlog.id.toString(),
       blogName: newBlog.name,
       createdAt: expect.any(String),
     });
@@ -108,12 +104,12 @@ describe(`${APIPOSTS}`, () => {
     await req.get(`${APIPOSTS}/1000`).expect(404);
   });
   it("+ GET post by ID with correct id", async () => {
-    await req.get(`${APIPOSTS}/${newPost._id}`).expect(200, newPost);
+    await req.get(`${APIPOSTS}/${newPost.id}`).expect(200, newPost);
   });
 
   it("- PUT post by ID with incorrect data", async () => {
     await req
-      .put(`${APIPOSTS}/${newPost._id}`)
+      .put(`${APIPOSTS}/${newPost.id}`)
       .set({ authorization: "Basic " + adminBase64 })
       .send({
         title: `My BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy 
@@ -122,7 +118,7 @@ describe(`${APIPOSTS}`, () => {
            BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy BlogMy Blog`,
         shortDescription: 42,
         content: 3.14,
-        blogId: newBlog._id.toString(),
+        blogId: newBlog.id.toString(),
       })
       .expect(400);
 
@@ -132,24 +128,24 @@ describe(`${APIPOSTS}`, () => {
 
   it("+ PUT post by ID with correct data", async () => {
     await req
-      .put(`${APIPOSTS}/${newPost._id.toString()}`)
+      .put(`${APIPOSTS}/${newPost.id.toString()}`)
       .set({ authorization: "Basic " + adminBase64 })
       .send({
         title: "My Blog",
         shortDescription: "Interest blog about my life",
         content: "blabla bla ololo lol",
-        blogId: newBlog._id.toString(),
+        blogId: newBlog.id.toString(),
         blogName: newBlog.name,
       })
       .expect(204);
 
     const res = await req.get(`${APIPOSTS}`);
     expect(res.body[0]).toEqual({
-      _id: newPost._id.toString(),
+      id: newPost.id.toString(),
       title: "My Blog",
       shortDescription: "Interest blog about my life",
       content: "blabla bla ololo lol",
-      blogId: newBlog._id,
+      blogId: newBlog.id,
       blogName: newBlog.name,
       createdAt: expect.any(String),
     });
@@ -166,14 +162,14 @@ describe(`${APIPOSTS}`, () => {
     console.log(newPost);
     await req
       .set({ authorization: "Basic " + adminBase64 })
-      .delete(`${APIPOSTS}/${newPost._id}`)
+      .delete(`${APIPOSTS}/${newPost.id}`)
       .expect(204);
 
     const res = await req.get(APIPOSTS);
     expect(res.body.length).toBe(0);
     await req
       .set({ authorization: "Basic " + adminBase64 })
-      .delete(`${APIPOSTS}/${newPost._id}`)
+      .delete(`${APIPOSTS}/${newPost.id}`)
       .expect(404);
   });
 });

@@ -30,6 +30,9 @@ export const contentInputValidator = body("content")
   .withMessage("more then 1000 or 0");
 
 export const blogIdValidator = body("blogId")
+  // .exists()
+  // .withMessage("blogId is required") // Проверяем наличие поля
+  // .bail()
   .notEmpty()
   .withMessage("blogId is required")
   .isString()

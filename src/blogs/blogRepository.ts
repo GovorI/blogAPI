@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { blogsCollection, blogViewModel } from "../db/db_connection";
+import { blogsCollection, blogSchema } from "../db/db_connection";
 
 export type createBlogDTO = {
   name: string;
@@ -8,8 +8,18 @@ export type createBlogDTO = {
 };
 
 export const blogRepository = {
-  getAll: async (): Promise<blogViewModel[]> => {
-    return blogsCollection.find({}).toArray();
+  getAll: async (): Promise<blogSchema[]> => {
+    const blogs = await blogsCollection.find({}).toArray();
+    const result = blogs.map((blog: blogSchema) => ({
+      id: blog._id.toString(),
+      name: blog.name,
+      description: blog.description,
+      websiteUrl: blog.websiteUrl,
+      isMembership: blog.isMembership,
+      createdAt: blog.createdAt,
+    }));
+    console.log("Get all blogs --->", result);
+    return result;
   },
   getById: async (id: string) => {
     try {
@@ -20,12 +30,12 @@ export const blogRepository = {
       }
 
       return {
-        _id: result._id.toString(),
+        id: result._id.toString(),
         name: result.name,
         description: result.description,
         websiteUrl: result.websiteUrl,
-        createdAt: result.createdAt.toISOString(),
         isMembership: result.isMembership || false,
+        createdAt: result.createdAt.toISOString(),
       };
     } catch (error) {
       // console.error("Invalid ID format:", error);
@@ -39,12 +49,13 @@ export const blogRepository = {
       isMembership: false,
     };
     const result = await blogsCollection.insertOne(newBlog);
-    console.log(result);
-    return {
-      _id: result.insertedId.toString(),
-      ...newBlog,
-      createdAt: newBlog.createdAt.toISOString(),
-    };
+    console.log("Create Blog --->", result);
+    return await blogRepository.getById(result.insertedId);
+    // return {
+    //   id: result.insertedId.toString(),
+    //   ...newBlog,
+    //   createdAt: newBlog.createdAt.toISOString(),
+    // };
   },
   update: async (blogId: string, newBlogData: createBlogDTO) => {
     try {

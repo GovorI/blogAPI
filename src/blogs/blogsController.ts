@@ -1,14 +1,14 @@
 import { Router, Request, Response } from "express";
 import { blogRepository } from "./blogRepository";
 import {
-  blogIdValidator,
+  // blogIdValidator,
   descriptionValidator,
   nameValidator,
   websiteUrlValidator,
 } from "../validators/blogValidators";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
 import { authMiddleware } from "../validators/authValidator";
-import { blogViewModel } from "../db/db_connection";
+import { blogSchema, blogViewModel } from "../db/db_connection";
 
 export const blogsRouter = Router();
 
@@ -23,7 +23,7 @@ const blogsController = {
   },
   createBlog: async (req: Request, res: Response) => {
     try {
-      const newBlog: blogViewModel = await blogRepository.create(req.body);
+      const newBlog = await blogRepository.create(req.body);
       res.status(201).send(newBlog);
     } catch (error) {
       res.status(500).send("Internal server error");
@@ -84,7 +84,11 @@ const blogsController = {
 };
 
 blogsRouter.get("/", blogsController.getBlogs);
-blogsRouter.get("/:id", blogIdValidator, blogsController.getById);
+blogsRouter.get(
+  "/:id",
+  //  blogIdValidator,
+  blogsController.getById
+);
 blogsRouter.post(
   "/",
   authMiddleware,
@@ -97,7 +101,7 @@ blogsRouter.post(
 blogsRouter.put(
   "/:id",
   authMiddleware,
-  blogIdValidator,
+  // blogIdValidator,
   nameValidator,
   descriptionValidator,
   websiteUrlValidator,
@@ -107,6 +111,7 @@ blogsRouter.put(
 blogsRouter.delete(
   "/:id",
   authMiddleware,
-  blogIdValidator,
+  // blogIdValidator,
+  inputCheckErrorsMiddleware,
   blogsController.deleteById
 );

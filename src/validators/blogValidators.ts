@@ -32,24 +32,24 @@ export const websiteUrlValidator = body("websiteUrl")
   .isLength({ min: 1, max: 100 })
   .withMessage("more then 100 or 0");
 
-export const blogIdValidator = param("id")
-  .notEmpty()
-  .isString()
-  .withMessage("not string")
-  .trim()
-  // .isMongoId();
-  .custom((id) => {
-    if (!isValidObjectId(id)) throw new Error("Invalid Id format");
-    return true;
-  })
-  .withMessage("Provided ID is not valid");
+// export const blogIdValidator = param("id")
+//   .notEmpty()
+//   .isString()
+//   .withMessage("not string")
+//   .trim()
+//   // .isMongoId();
+//   .custom((id) => {
+//     if (!isValidObjectId(id)) throw new Error("Invalid Id format");
+//     return true;
+//   })
+//   .withMessage("Provided ID is not valid");
 
-export const checkBlogExistenceForPost = body("blogId").custom(
-  async (blogId) => {
-    const blog = await blogRepository.getById(blogId);
-    if (!blog) {
-      throw new Error("blog not found");
-    }
-    return true;
-  }
-);
+// export const checkBlogExistenceForPost = body("blogId").custom(
+//   async (blogId) => {
+//     const blog = await blogRepository.getById(blogId);
+//     if (!blog) {
+//       throw new Error("blog not found");
+//     }
+//     return true;
+//   }
+// );

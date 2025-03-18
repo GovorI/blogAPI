@@ -4,11 +4,10 @@ import {
   contentInputValidator,
   postIdValidator,
   postTitleInputValidator,
-  blogIdValidator,
+  // blogIdValidator,
   shortDescriptionValidator,
 } from "../validators/postValidators";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
-import { checkBlogExistenceForPost } from "../validators/blogValidators";
 import { authMiddleware } from "../validators/authValidator";
 
 export const postsRouter = Router();
@@ -43,11 +42,11 @@ const postsController = {
   create: async (req: Request, res: Response) => {
     try {
       const newPost = await postRepository.create(req.body);
-      if (newPost) {
-        res.status(201).send(newPost);
+      if (!newPost) {
+        res.sendStatus(404);
         return;
       }
-      res.sendStatus(404);
+      res.status(201).send(newPost);
       return;
     } catch (error) {
       res.status(500).send("Internal server error");
@@ -92,8 +91,8 @@ postsRouter.post(
   postTitleInputValidator,
   shortDescriptionValidator,
   contentInputValidator,
-  blogIdValidator,
-  checkBlogExistenceForPost,
+  // blogIdValidator,
+  // checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   postsController.create
 );
@@ -101,11 +100,11 @@ postsRouter.put(
   "/:id",
   authMiddleware,
   postIdValidator,
-  blogIdValidator,
+  // blogIdValidator,
   postTitleInputValidator,
   shortDescriptionValidator,
   contentInputValidator,
-  checkBlogExistenceForPost,
+  // checkBlogExistenceForPost,
   inputCheckErrorsMiddleware,
   postsController.update
 );
