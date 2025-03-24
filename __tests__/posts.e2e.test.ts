@@ -1,6 +1,7 @@
 import {
   blogModel,
   client,
+  postModel,
   postViewModel,
   runDb,
 } from "../src/db/db_connection";
@@ -20,7 +21,7 @@ describe(`${APIPOSTS}`, () => {
   const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
   let newBlog: blogModel;
-  let newPost: postViewModel;
+  let newPost: postModel;
 
   beforeAll(async () => {
     await runDb();
@@ -46,7 +47,13 @@ describe(`${APIPOSTS}`, () => {
   });
 
   it("GET posts = []", async () => {
-    await req.get(APIPOSTS).expect([]);
+    await req.get(APIPOSTS).expect({
+      pagesCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      items: [],
+    });
   });
 
   it("- POST does not create the post with incorrect data (no title, no shortDescription, no content, no blogId)", async function () {
@@ -65,11 +72,18 @@ describe(`${APIPOSTS}`, () => {
             field: "content",
             message: "content is required",
           },
+          // { field: "blogId", message: "blogId is required" },
         ],
       });
 
     const res = await req.get(APIPOSTS);
-    expect(res.body).toEqual([]);
+    expect(res.body).toEqual({
+      pagesCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      items: [],
+    });
   });
 
   it("+ POST new post with correct data", async () => {
@@ -122,8 +136,8 @@ describe(`${APIPOSTS}`, () => {
       })
       .expect(400);
 
-    const res = await req.get(APIPOSTS);
-    expect(res.body[0]).toEqual(newPost);
+    const res = await req.get(`${APIPOSTS}/${newPost.id}`);
+    expect(res.body).toEqual(newPost);
   });
 
   it("+ PUT post by ID with correct data", async () => {
@@ -139,8 +153,8 @@ describe(`${APIPOSTS}`, () => {
       })
       .expect(204);
 
-    const res = await req.get(`${APIPOSTS}`);
-    expect(res.body[0]).toEqual({
+    const res = await req.get(`${APIPOSTS}/${newPost.id}`).expect(200);
+    expect(res.body).toEqual({
       id: newPost.id.toString(),
       title: "My Blog",
       shortDescription: "Interest blog about my life",
@@ -149,7 +163,7 @@ describe(`${APIPOSTS}`, () => {
       blogName: newBlog.name,
       createdAt: expect.any(String),
     });
-    newPost = res.body[0];
+    newPost = res.body;
   });
 
   it("- DELETE post by incorrect ID", async () => {
@@ -161,15 +175,79 @@ describe(`${APIPOSTS}`, () => {
   it("+ DELETE post by correct ID", async () => {
     console.log(newPost);
     await req
-      .set({ authorization: "Basic " + adminBase64 })
       .delete(`${APIPOSTS}/${newPost.id}`)
+      .set({ authorization: "Basic " + adminBase64 })
       .expect(204);
 
-    const res = await req.get(APIPOSTS);
-    expect(res.body.length).toBe(0);
-    await req
+    const res = await req
       .set({ authorization: "Basic " + adminBase64 })
-      .delete(`${APIPOSTS}/${newPost.id}`)
+      .get(`${APIPOSTS}/${newPost.id}`)
       .expect(404);
+  });
+
+  it("+ GET posts with pagination", async () => {
+    // Создаем несколько постов для теста пагинации
+    for (let i = 0; i < 15; i++) {
+      await req
+        .post(APIPOSTS)
+        .set({ authorization: "Basic " + adminBase64 })
+        .send({
+          title: `Post ${i}`,
+          shortDescription: "Test post",
+          content: "Test content",
+          blogId: newBlog.id.toString(),
+        })
+        .expect(201);
+    }
+
+    // Проверяем пагинацию (страница 1)
+    const resPage1 = await req
+      .get(
+        `${APIPOSTS}?pageNumber=1&pageSize=10&sortBy=createdAt&sortDirection=desc`
+      )
+      .expect(200);
+
+    expect(resPage1.body).toMatchObject({
+      pagesCount: 2,
+      page: 1,
+      pageSize: 10,
+      totalCount: 15,
+      items: expect.arrayContaining([
+        {
+          id: expect.any(String),
+          title: expect.any(String),
+          shortDescription: expect.any(String),
+          content: expect.any(String),
+          blogId: newBlog.id.toString(),
+          blogName: newBlog.name,
+          createdAt: expect.any(String),
+        },
+      ]),
+    });
+
+    // Проверяем пагинацию (страница 2)
+    const resPage2 = await req
+      .get(
+        `${APIPOSTS}?pageNumber=2&pageSize=10&sortBy=createdAt&sortDirection=desc`
+      )
+      .expect(200);
+
+    expect(resPage2.body).toMatchObject({
+      pagesCount: 2,
+      page: 2,
+      pageSize: 10,
+      totalCount: 15,
+      items: expect.arrayContaining([
+        {
+          id: expect.any(String),
+          title: expect.any(String),
+          shortDescription: expect.any(String),
+          content: expect.any(String),
+          blogId: newBlog.id.toString(),
+          blogName: newBlog.name,
+          createdAt: expect.any(String),
+        },
+      ]),
+    });
   });
 });
