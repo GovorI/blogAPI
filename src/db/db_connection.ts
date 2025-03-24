@@ -10,7 +10,7 @@ export type blogSchema = {
   name: string;
   description: string;
   websiteUrl: string;
-  createdAt: string;
+  createdAt: Date;
   isMembership: boolean;
 };
 
@@ -21,19 +21,10 @@ export type postSchema = {
   content: string;
   blogId: string;
   blogName: string;
-  createdAt: string;
+  createdAt: Date;
 };
 
-export type blogViewModel = {
-  id: string;
-  name: string;
-  description: string;
-  websiteUrl: string;
-  createdAt: string;
-  isMembership: boolean;
-};
-
-export type postViewModel = {
+export type postModel = {
   id: string;
   title: string;
   shortDescription: string;
@@ -43,6 +34,31 @@ export type postViewModel = {
   createdAt: string;
 };
 
+export type blogModel = {
+  id: string;
+  name: string;
+  description: string;
+  websiteUrl: string;
+  createdAt: string;
+  isMembership: boolean;
+};
+
+export type blogsViewModel = {
+  pagesCount: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: blogModel[];
+};
+
+export type postViewModel = {
+  pagesCount: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: postModel[];
+};
+
 type dbType = {
   blogs: Array<blogSchema>;
   posts: Array<postViewModel>;
@@ -50,7 +66,7 @@ type dbType = {
 
 export type ReadonlyDBType = {
   blogs: Readonly<blogSchema[]>;
-  posts: Readonly<postViewModel[]>;
+  posts: Readonly<postSchema[]>;
 };
 
 export async function runDb() {

@@ -1,5 +1,5 @@
 import { body, param } from "express-validator";
-import { blogRepository } from "../blogs/blogRepository";
+import { blogRepository } from "../repositories/blogRepository";
 import { isValidObjectId } from "mongoose";
 
 export const postTitleInputValidator = body("title")

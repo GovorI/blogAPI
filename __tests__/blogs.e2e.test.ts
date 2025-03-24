@@ -1,10 +1,9 @@
+import { blogModel, blogSchema, client, runDb } from "../src/db/db_connection";
 import {
-  blogSchema,
-  blogViewModel,
-  client,
-  runDb,
-} from "../src/db/db_connection";
-import { AUTH_TYPE, AUTHORIZATION_HEADER, req } from "../helpers/test_helpers";
+  AUTH_TYPE,
+  AUTHORIZATION_HEADER,
+  req,
+} from "../src/helpers/test_helpers";
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { SETTINGS } from "../src/settings";
 import { utf8ToBase64 } from "../src/validators/authValidator";
@@ -13,7 +12,7 @@ const APIBLOGS = SETTINGS.PATH.BLOGS;
 const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
 describe(APIBLOGS, () => {
-  let newBlog: blogViewModel;
+  let newBlog: blogModel;
 
   beforeAll(async () => {
     await runDb();
@@ -25,7 +24,13 @@ describe(APIBLOGS, () => {
   });
 
   it("GET blogs = []", async () => {
-    await req.get(APIBLOGS).expect([]);
+    await req.get(APIBLOGS).expect({
+      pagesCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      items: [],
+    });
   });
 
   it("- POST does not create the blog with incorrect data (no name, no description, no websiteUrl)", async function () {
@@ -44,7 +49,13 @@ describe(APIBLOGS, () => {
         ],
       });
     const res = await req.get(APIBLOGS);
-    expect(res.body).toEqual([]);
+    expect(res.body).toEqual({
+      pagesCount: 0,
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      items: [],
+    });
   });
 
   it("+ POST new blog with correct data", async () => {
@@ -74,6 +85,30 @@ describe(APIBLOGS, () => {
     });
   });
 
+  it("+ GET blogs with pagination", async () => {
+    const res = await req
+      .get(
+        `${APIBLOGS}?pageNumber=1&pageSize=5&sortBy=createdAt&sortDirection=desc`
+      )
+      .expect(200);
+    expect(res.body).toMatchObject({
+      pagesCount: 1,
+      page: 1,
+      pageSize: 5,
+      totalCount: 1,
+      items: [
+        {
+          id: expect.any(String),
+          name: "Ilya",
+          description: "micro blog",
+          websiteUrl: "https://www.insta.com",
+          isMembership: false,
+          createdAt: expect.any(String),
+        },
+      ],
+    });
+  });
+
   it("- GET blog by ID with incorrect id", async () => {
     await req.get(`${APIBLOGS}/1000`).expect(404);
   });
@@ -83,6 +118,7 @@ describe(APIBLOGS, () => {
       .get(`${APIBLOGS}/${newBlog.id}`)
       .expect(200)
       .expect((res) => {
+        console.log("+ GET blog by ID with correct id", res.body);
         expect(res.body).toEqual(newBlog);
       });
   });
@@ -99,8 +135,9 @@ describe(APIBLOGS, () => {
       })
       .expect(400);
 
-    const res = await req.get(APIBLOGS);
-    expect(res.body[0]).toEqual(newBlog);
+    const res = await req.get(`${APIBLOGS}/${newBlog.id}`);
+    console.log("- PUT blog by ID with incorrect data", res.body);
+    expect(res.body).toEqual(newBlog);
   });
 
   it("+ PUT blog by ID with correct data", async () => {
@@ -115,8 +152,8 @@ describe(APIBLOGS, () => {
       })
       .expect(204);
 
-    const res = await req.get(`${APIBLOGS}`);
-    expect(res.body[0]).toEqual({
+    const res = await req.get(`${APIBLOGS}/${newBlog.id}`);
+    expect(res.body).toEqual({
       id: expect.any(String),
       name: "Vanya",
       description: "MACRO blog",
@@ -124,7 +161,7 @@ describe(APIBLOGS, () => {
       createdAt: expect.any(String),
       isMembership: false,
     });
-    newBlog = res.body[0];
+    newBlog = res.body;
     console.log(newBlog + "+ PUT blog by ID with correct data");
   });
 
@@ -135,7 +172,6 @@ describe(APIBLOGS, () => {
       .expect(404);
   });
   it("+ DELETE blog by correct ID", async () => {
-    console.log(`${APIBLOGS}/${newBlog.id}`);
     await req
       .delete(`${APIBLOGS}/${newBlog.id}`)
       .set({ authorization: "Basic " + adminBase64 })

@@ -1,10 +1,10 @@
 import {
-  blogViewModel,
+  blogModel,
   client,
   postViewModel,
   runDb,
 } from "../src/db/db_connection";
-import { req } from "../helpers/test_helpers";
+import { req } from "../src/helpers/test_helpers";
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { SETTINGS } from "../src/settings";
 import { utf8ToBase64 } from "../src/validators/authValidator";
@@ -19,7 +19,7 @@ const APIPOSTS = SETTINGS.PATH.POSTS;
 describe(`${APIPOSTS}`, () => {
   const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
-  let newBlog: blogViewModel;
+  let newBlog: blogModel;
   let newPost: postViewModel;
 
   beforeAll(async () => {

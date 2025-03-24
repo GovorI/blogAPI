@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { createBlogDTO } from "../blogs/blogRepository";
-import { createPostDTO } from "../posts/postRepository";
+import { createBlogDTO } from "../repositories/blogRepository";
+import { createPostDTO } from "../repositories/postRepository";
 
 export type FieldNamesType = keyof createBlogDTO | keyof createPostDTO;
 export type OutputErrorsType = {
