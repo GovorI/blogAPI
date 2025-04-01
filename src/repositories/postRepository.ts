@@ -1,10 +1,10 @@
 import { ObjectId } from "mongodb";
-import { blogRepository } from "./blogRepository";
+
 import {
-  postModel,
-  postSchema,
-  postsCollection,
   postViewModel,
+  postSchemaDB,
+  postsCollection,
+  postsMapWithPagination,
 } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
 
@@ -19,7 +19,7 @@ type pagingMapDTO = {
   totalCount: number;
   pageSize: number;
   pageNumber: number;
-  items: postSchema[];
+  items: postSchemaDB[];
 };
 
 export const postRepository = {
@@ -29,7 +29,7 @@ export const postRepository = {
     sortBy,
     sortDirection,
     searchNameTerm,
-  }: PaginationParams): Promise<postViewModel | null> => {
+  }: PaginationParams): Promise<postsMapWithPagination | null> => {
     try {
       const filter = searchNameTerm
         ? { name: { $regex: searchNameTerm, $options: "i" } }
@@ -55,8 +55,6 @@ export const postRepository = {
       //   blogName: post.blogName,
       //   createdAt: post.createdAt,
       // }));
-      // console.log("Get all posts --->", result);
-      // return result;
     } catch (error) {
       return null;
     }
@@ -110,7 +108,7 @@ export const postRepository = {
   getAllPostsForThisBlog: async (
     id: string,
     { pageNumber, pageSize, sortBy, sortDirection }: PaginationParams
-  ): Promise<postViewModel | null> => {
+  ): Promise<postsMapWithPagination | null> => {
     try {
       const filter = { blogId: id };
       const [items, totalCount] = await Promise.all([
@@ -130,7 +128,7 @@ export const postRepository = {
   },
 };
 
-function mapToViewModel(post: postSchema): postModel {
+function mapToViewModel(post: postSchemaDB): postViewModel {
   return {
     id: post._id.toString(),
     title: post.title,
@@ -153,7 +151,7 @@ function mapPostsWithPaging({
     page: pageNumber,
     pageSize: pageSize,
     totalCount,
-    items: items.map((post: postSchema) => {
+    items: items.map((post: postSchemaDB) => {
       return mapToViewModel(post);
     }),
   };

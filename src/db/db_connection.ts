@@ -5,7 +5,7 @@ const mongoUri = SETTINGS.MONGODB;
 
 export const client = new MongoClient(mongoUri);
 
-export type blogSchema = {
+export type blogSchemaDB = {
   _id: string;
   name: string;
   description: string;
@@ -13,8 +13,15 @@ export type blogSchema = {
   createdAt: Date;
   isMembership: boolean;
 };
+export type userSchemaDB = {
+  _id: string;
+  login: string;
+  password: string;
+  email: string;
+  createdAt: Date;
+};
 
-export type postSchema = {
+export type postSchemaDB = {
   _id: string;
   title: string;
   shortDescription: string;
@@ -22,51 +29,59 @@ export type postSchema = {
   blogId: string;
   blogName: string;
   createdAt: Date;
-};
-
-export type postModel = {
-  id: string;
-  title: string;
-  shortDescription: string;
-  content: string;
-  blogId: string;
-  blogName: string;
-  createdAt: string;
-};
-
-export type blogModel = {
-  id: string;
-  name: string;
-  description: string;
-  websiteUrl: string;
-  createdAt: string;
-  isMembership: boolean;
-};
-
-export type blogsViewModel = {
-  pagesCount: number;
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  items: blogModel[];
 };
 
 export type postViewModel = {
+  id: string;
+  title: string;
+  shortDescription: string;
+  content: string;
+  blogId: string;
+  blogName: string;
+  createdAt: string;
+};
+
+export type blogViewModel = {
+  id: string;
+  name: string;
+  description: string;
+  websiteUrl: string;
+  createdAt: string;
+  isMembership: boolean;
+};
+
+export type userViewModel = {
+  id: string;
+  login: string;
+  email: string;
+  createdAt: string;
+};
+
+export type blogsMapWithPagination = {
   pagesCount: number;
   page: number;
   pageSize: number;
   totalCount: number;
-  items: postModel[];
+  items: blogViewModel[];
+};
+
+export type postsMapWithPagination = {
+  pagesCount: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: postViewModel[];
 };
 
 type dbType = {
-  blogs: Array<blogSchema>;
-  posts: Array<postViewModel>;
+  blogs: Array<blogSchemaDB>;
+  posts: Array<postsMapWithPagination>;
 };
 
 export type ReadonlyDBType = {
-  blogs: Readonly<blogSchema[]>;
-  posts: Readonly<postSchema[]>;
+  blogs: Readonly<blogSchemaDB[]>;
+  posts: Readonly<postSchemaDB[]>;
+  users: Readonly<userSchemaDB[]>;
 };
 
 export async function runDb() {
@@ -82,12 +97,14 @@ export async function runDb() {
 const db = client.db("blog-api");
 export const blogsCollection = db.collection("blogs");
 export const postsCollection = db.collection("posts");
+export const usersCollection = db.collection("users");
 
 export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
   if (!dataset) {
     // если в функцию ничего не передано - то очищаем базу данных
     await blogsCollection.deleteMany({});
     await postsCollection.deleteMany({});
+    await usersCollection.deleteMany({});
     return;
   }
 
@@ -111,6 +128,16 @@ export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
         createdAt: post.createdAt || new Date().toISOString(),
         _id: new ObjectId(),
         blogId: new ObjectId(post.blogId),
+      }))
+    );
+  }
+  if (dataset.users) {
+    await db.collection("users").deleteMany({});
+    await db.collection("users").insertMany(
+      dataset.users.map((user) => ({
+        ...user,
+        createdAt: user.createdAt || new Date().toISOString(),
+        _id: new ObjectId(),
       }))
     );
   }

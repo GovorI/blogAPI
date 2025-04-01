@@ -1,7 +1,6 @@
 import {
-  blogModel,
+  blogViewModel,
   client,
-  postModel,
   postViewModel,
   runDb,
 } from "../src/db/db_connection";
@@ -20,8 +19,8 @@ const APIPOSTS = SETTINGS.PATH.POSTS;
 describe(`${APIPOSTS}`, () => {
   const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
-  let newBlog: blogModel;
-  let newPost: postModel;
+  let newBlog: blogViewModel;
+  let newPost: postViewModel;
 
   beforeAll(async () => {
     await runDb();

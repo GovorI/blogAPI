@@ -7,6 +7,8 @@ export const SETTINGS = {
   PATH: {
     BLOGS: "/blogs",
     POSTS: "/posts",
+    USERS: "/users",
+    AUTH: "/auth",
     TESTING: "/testing/all-data",
   },
   ADMIN_AUTH: "admin:qwerty",

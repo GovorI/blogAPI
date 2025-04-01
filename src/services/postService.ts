@@ -1,6 +1,10 @@
 import { postRepository } from "../repositories/postRepository";
 import { blogRepository } from "../repositories/blogRepository";
-import { postModel, postSchema, postViewModel } from "../db/db_connection";
+import {
+  postViewModel,
+  postSchemaDB,
+  postsMapWithPagination,
+} from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
 
 export type createPostDTO = {
@@ -17,7 +21,7 @@ export const postService = {
     sortBy,
     sortDirection,
     searchNameTerm,
-  }: PaginationParams): Promise<postViewModel | null> => {
+  }: PaginationParams): Promise<postsMapWithPagination | null> => {
     try {
       const posts = await postRepository.getAll({
         pageNumber,
@@ -32,7 +36,7 @@ export const postService = {
       return null;
     }
   },
-  getById: async (id: string): Promise<postModel | null> => {
+  getById: async (id: string): Promise<postViewModel | null> => {
     try {
       const result = await postRepository.getById(id);
       if (!result) return null;
@@ -42,7 +46,7 @@ export const postService = {
       return null;
     }
   },
-  create: async (postData: createPostDTO): Promise<postModel | null> => {
+  create: async (postData: createPostDTO): Promise<postViewModel | null> => {
     try {
       const blog = await blogRepository.getById(postData.blogId);
       console.log("postData in POSTSERVICE blogId ---> ", postData.blogId);

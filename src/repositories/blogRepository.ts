@@ -1,17 +1,12 @@
 import { ObjectId } from "mongodb";
 import {
   blogsCollection,
-  blogSchema,
-  blogModel,
-  blogsViewModel,
+  blogSchemaDB,
+  blogViewModel,
+  blogsMapWithPagination,
 } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
-
-export type createBlogDTO = {
-  name: string;
-  description: string;
-  websiteUrl: string;
-};
+import { createBlogDTO } from "../services/blogService";
 
 export const blogRepository = {
   getAll: async ({
@@ -20,7 +15,7 @@ export const blogRepository = {
     sortBy,
     sortDirection,
     searchNameTerm,
-  }: PaginationParams): Promise<blogsViewModel> => {
+  }: PaginationParams): Promise<blogsMapWithPagination> => {
     const filter = searchNameTerm
       ? { name: { $regex: searchNameTerm, $options: "i" } }
       : {};
@@ -39,7 +34,7 @@ export const blogRepository = {
       page: pageNumber,
       pageSize: pageSize,
       totalCount,
-      items: items.map((blog: blogSchema) => {
+      items: items.map((blog: blogSchemaDB) => {
         return mapToViewModel(blog);
       }),
     };
@@ -102,7 +97,7 @@ export const blogRepository = {
   },
 };
 
-function mapToViewModel(blog: blogSchema) {
+function mapToViewModel(blog: blogSchemaDB) {
   return {
     id: blog._id.toString(),
     name: blog.name,

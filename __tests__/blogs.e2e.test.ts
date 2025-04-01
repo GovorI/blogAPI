@@ -1,4 +1,4 @@
-import { blogModel, blogSchema, client, runDb } from "../src/db/db_connection";
+import { blogViewModel, client, runDb } from "../src/db/db_connection";
 import {
   AUTH_TYPE,
   AUTHORIZATION_HEADER,
@@ -12,7 +12,7 @@ const APIBLOGS = SETTINGS.PATH.BLOGS;
 const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
 describe(APIBLOGS, () => {
-  let newBlog: blogModel;
+  let newBlog: blogViewModel;
 
   beforeAll(async () => {
     await runDb();

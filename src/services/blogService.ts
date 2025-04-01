@@ -1,5 +1,5 @@
 import { blogRepository } from "../repositories/blogRepository";
-import { blogSchema, blogsViewModel } from "../db/db_connection";
+import { blogSchemaDB, blogsMapWithPagination } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
 
 export type createBlogDTO = {
@@ -15,7 +15,7 @@ export const blogService = {
     sortBy,
     sortDirection,
     searchNameTerm,
-  }: PaginationParams): Promise<blogsViewModel> => {
+  }: PaginationParams): Promise<blogsMapWithPagination> => {
     const blogs = await blogRepository.getAll({
       pageNumber,
       pageSize,
@@ -23,17 +23,7 @@ export const blogService = {
       sortDirection,
       searchNameTerm,
     });
-    // console.log("Get all blogs --->", blogs);
     return blogs;
-    // const result = blogs.map((blog: blogSchema) => ({
-    //   id: blog._id.toString(),
-    //   name: blog.name,
-    //   description: blog.description,
-    //   websiteUrl: blog.websiteUrl,
-    //   isMembership: blog.isMembership,
-    //   createdAt: blog.createdAt,
-    // }));
-    // return result;
   },
   getById: async (id: string) => {
     try {
@@ -41,7 +31,6 @@ export const blogService = {
       if (!result) {
         return null;
       }
-      // console.log("getbyid from blogService --->", result);
       return result;
     } catch (error) {
       // console.error("Invalid ID format:", error);
