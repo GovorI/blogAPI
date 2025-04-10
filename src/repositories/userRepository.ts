@@ -15,6 +15,9 @@ export const userRepository = {
       .toArray();
     return user[0];
   },
+  getUserById: async (userId: string) => {
+    return await usersCollection.findOne({ _id: new ObjectId(userId) });
+  },
   getUserByEmail: async (email: string) => {
     const res = await usersCollection.findOne({ email });
     console.log("userRepository.getUserByEmail", res);
@@ -27,7 +30,10 @@ export const userRepository = {
   },
   createUser: async (userData: createUserDTO) => {
     const res = await usersCollection.insertOne({
-      ...userData,
+      _id: new ObjectId(),
+      login: userData.login,
+      password: userData.password,
+      email: userData.email,
       createdAt: new Date(),
     });
     console.log("createUser Repo ---- > ", res.insertedId);

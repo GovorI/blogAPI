@@ -1,12 +1,11 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
-import { ObjectId } from "mongodb";
+import {Collection, MongoClient ,ObjectId} from "mongodb";
 import { SETTINGS } from "../settings";
 const mongoUri = SETTINGS.MONGODB;
 
 export const client = new MongoClient(mongoUri);
 
 export type blogSchemaDB = {
-  _id: string;
+  _id: ObjectId;
   name: string;
   description: string;
   websiteUrl: string;
@@ -14,7 +13,7 @@ export type blogSchemaDB = {
   isMembership: boolean;
 };
 export type userSchemaDB = {
-  _id: string;
+  _id: ObjectId;
   login: string;
   password: string;
   email: string;
@@ -22,12 +21,22 @@ export type userSchemaDB = {
 };
 
 export type postSchemaDB = {
-  _id: string;
+  _id: ObjectId;
   title: string;
   shortDescription: string;
   content: string;
   blogId: string;
   blogName: string;
+  createdAt: Date;
+};
+export type commentSchemaDB = {
+  _id: ObjectId;
+  postId: string;
+  content: string;
+  commentatorInfo: {
+    userId: string;
+    userLogin: string;
+  };
   createdAt: Date;
 };
 
@@ -38,6 +47,18 @@ export type postViewModel = {
   content: string;
   blogId: string;
   blogName: string;
+  createdAt: string;
+};
+
+type commentatorInfo = {
+  userId: string;
+  userLogin: string;
+};
+
+export type commentViewModel = {
+  id: string;
+  content: string;
+  commentatorInfo: commentatorInfo;
   createdAt: string;
 };
 
@@ -82,6 +103,7 @@ export type ReadonlyDBType = {
   blogs: Readonly<blogSchemaDB[]>;
   posts: Readonly<postSchemaDB[]>;
   users: Readonly<userSchemaDB[]>;
+  comments: Readonly<commentSchemaDB[]>;
 };
 
 export async function runDb() {
@@ -95,9 +117,10 @@ export async function runDb() {
 }
 
 const db = client.db("blog-api");
-export const blogsCollection = db.collection("blogs");
-export const postsCollection = db.collection("posts");
-export const usersCollection = db.collection("users");
+export const blogsCollection: Collection<blogSchemaDB> = db.collection("blogs");
+export const postsCollection: Collection<postSchemaDB> = db.collection("posts");
+export const usersCollection:Collection<userSchemaDB> = db.collection("users");
+export const commentsCollection:Collection<commentSchemaDB> = db.collection("comments");
 
 export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
   if (!dataset) {
@@ -105,6 +128,7 @@ export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
     await blogsCollection.deleteMany({});
     await postsCollection.deleteMany({});
     await usersCollection.deleteMany({});
+    await commentsCollection.deleteMany({});
     return;
   }
 
@@ -137,6 +161,16 @@ export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
       dataset.users.map((user) => ({
         ...user,
         createdAt: user.createdAt || new Date().toISOString(),
+        _id: new ObjectId(),
+      }))
+    );
+  }
+  if (dataset.comments) {
+    await db.collection("comments").deleteMany({});
+    await db.collection("comments").insertMany(
+      dataset.comments.map((comment) => ({
+        ...comment,
+        createdAt: comment.createdAt || new Date().toISOString(),
         _id: new ObjectId(),
       }))
     );

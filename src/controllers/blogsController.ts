@@ -6,7 +6,7 @@ import {
 } from "../validators/blogValidators";
 import { paginationQueries, PaginationParams } from "../helpers/pagination";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
-import { authMiddleware } from "../validators/authValidator";
+import { authBaseMiddleware } from "../validators/authValidator";
 import { blogViewModel, blogsMapWithPagination } from "../db/db_connection";
 import { blogService } from "../services/blogService";
 import { postService } from "../services/postService";
@@ -15,6 +15,7 @@ import {
   postTitleInputValidator,
   shortDescriptionValidator,
 } from "../validators/postValidators";
+import {postQueryRepo} from "../repositories/postQueryRepo";
 
 export const blogsRouter = Router();
 
@@ -144,7 +145,7 @@ const blogsController = {
         });
         return;
       }
-      const posts = await postService.getAllPostsForThisBlog(id, {
+      const posts = await postQueryRepo.getAllPostsForThisBlog(id, {
         pageNumber,
         pageSize,
         sortBy,
@@ -164,10 +165,10 @@ const blogsController = {
 
 blogsRouter.get("/", blogsController.getBlogs);
 blogsRouter.get("/:id", blogsController.getById);
-blogsRouter.get("/:id/posts", blogsController.getAllPostsForThisBlog);
+blogsRouter.get("/:id/posts",  blogsController.getAllPostsForThisBlog);
 blogsRouter.post(
   "/:id/posts",
-  authMiddleware,
+  authBaseMiddleware,
   postTitleInputValidator,
   shortDescriptionValidator,
   contentInputValidator,
@@ -176,7 +177,7 @@ blogsRouter.post(
 );
 blogsRouter.post(
   "/",
-  authMiddleware,
+  authBaseMiddleware,
   nameValidator,
   descriptionValidator,
   websiteUrlValidator,
@@ -185,7 +186,7 @@ blogsRouter.post(
 );
 blogsRouter.put(
   "/:id",
-  authMiddleware,
+  authBaseMiddleware,
   nameValidator,
   descriptionValidator,
   websiteUrlValidator,
@@ -194,7 +195,7 @@ blogsRouter.put(
 );
 blogsRouter.delete(
   "/:id",
-  authMiddleware,
+  authBaseMiddleware,
   inputCheckErrorsMiddleware,
   blogsController.deleteById
 );

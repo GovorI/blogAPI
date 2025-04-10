@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { userSchemaDB, usersCollection } from "../db/db_connection";
 import { userViewModel } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
+import {DomainExceptions} from "../helpers/DomainExceptions";
 
 type pagingMapDTO = {
   totalCount: number;
@@ -13,11 +14,12 @@ type pagingMapDTO = {
 export const userQueryRepo = {
   getUserById: async (id: string): Promise<userViewModel> => {
     const user = await usersCollection.findOne({ _id: new ObjectId(id) });
+    if(!user) {throw new DomainExceptions(404, 'User not found')}
     return {
-      id: user._id,
+      id: user._id.toString(),
       login: user.login,
       email: user.email,
-      createdAt: user.createdAt,
+      createdAt: user.createdAt.toISOString(),
     };
   },
   getUsers: async ({

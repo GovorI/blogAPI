@@ -1,6 +1,7 @@
 import { blogRepository } from "../repositories/blogRepository";
 import { blogSchemaDB, blogsMapWithPagination } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
+import {ObjectId} from "mongodb";
 
 export type createBlogDTO = {
   name: string;
@@ -39,13 +40,17 @@ export const blogService = {
   },
   create: async (blogData: createBlogDTO) => {
     const newBlog = {
-      ...blogData,
+      _id: new ObjectId(),
+      name: blogData.name,
+      description: blogData.description,
+      websiteUrl: blogData.websiteUrl,
       createdAt: new Date(),
       isMembership: false,
     };
     const result = await blogRepository.create(newBlog);
     // console.log("Create Blog --->", result);
-    const blog = await blogRepository.getById(result.insertedId);
+
+    const blog = await blogRepository.getById(result!.insertedId.toString());
     // console.log("Created Blog --->", blog);
     return blog;
   },

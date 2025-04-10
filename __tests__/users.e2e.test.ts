@@ -75,7 +75,7 @@ describe(USERS, () => {
   });
 
   it("+ POST login user with correct login", async () => {
-    const res = await req
+    await req
       .post(USERS)
       .send({
         login: "Ilya133188",
@@ -84,13 +84,60 @@ describe(USERS, () => {
       })
       .expect(201);
 
-    await req
+    const res = await req
       .post(`${AUTH}/login`)
       .send({
         loginOrEmail: "Ilya133188",
         password: "1234567",
       })
-      .expect(204);
+      .expect(200);
+    expect(res.body).toMatchObject({
+      accessToken: expect.any(String),
+    });
+  });
+
+  it("+ POST login user with correct email", async () => {
+    await req
+      .post(USERS)
+      .send({
+        login: "Ilya1olol",
+        password: "1234567",
+        email: "email_my132@main.ru",
+      })
+      .expect(201);
+
+    const res = await req
+      .post(`${AUTH}/login`)
+      .send({
+        loginOrEmail: "email_my132@main.ru",
+        password: "1234567",
+      })
+      .expect(200);
+    expect(res.body).toMatchObject({
+      accessToken: expect.any(String),
+    });
+  });
+
+  it("+ GET login/me", async () => {
+    const res = await req
+      .post(`${AUTH}/login`)
+      .send({
+        loginOrEmail: "email_my132@main.ru",
+        password: "1234567",
+      })
+      .expect(200);
+    expect(res.body).toMatchObject({
+      accessToken: expect.any(String),
+    });
+    const me = await req
+      .get(`${AUTH}/me`)
+      .set({ authorization: "Bearer " + res.body.accessToken })
+      .expect(200);
+    expect(me.body).toMatchObject({
+      email: "email_my132@main.ru",
+      login: "Ilya1olol",
+      userId: expect.any(String),
+    });
   });
 
   it("- POST does not create user with duplicate email", async () => {
@@ -115,7 +162,7 @@ describe(USERS, () => {
       .expect(400);
 
     expect(res.body).toEqual({
-      errorsMessages: [{ field: "email", message: "Email already exists" }],
+      errorsMessages: [{ field: "User already exists", message: "User already exists" }],
     });
   });
 
@@ -141,7 +188,7 @@ describe(USERS, () => {
       .expect(400);
 
     expect(res.body).toEqual({
-      errorsMessages: [{ field: "login", message: "Login already exists" }],
+      errorsMessages: [{ field: "User already exists", message: "User already exists" }],
     });
   });
 

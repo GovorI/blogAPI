@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { createPostDTO } from "../repositories/postRepository";
 import { createBlogDTO } from "../services/blogService";
+import { createPostDTO } from "../services/postService";
 
 export type FieldNamesType = keyof createBlogDTO | keyof createPostDTO;
 export type OutputErrorsType = {
@@ -22,7 +22,10 @@ export const inputCheckErrorsMiddleware = (
     // console.log(eArray);
 
     res.status(400).json({
-      errorsMessages: eArray.map((x) => ({ field: x.path, message: x.msg })),
+      errorsMessages: eArray.map((x) => ({
+        field: x.path,
+        message: x.msg
+      })),
     });
     return;
   }

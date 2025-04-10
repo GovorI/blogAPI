@@ -26,8 +26,8 @@ export const contentInputValidator = body("content")
   .isString()
   .withMessage("not string")
   .trim()
-  .isLength({ min: 1, max: 1000 })
-  .withMessage("more then 1000 or 0");
+  .isLength({ min: 3, max: 1000 })
+  .withMessage("Content must be max 1000 characters");
 
 export const blogIdValidator = body("blogId")
   // .exists()
@@ -50,8 +50,9 @@ export const postIdValidator = param("id")
   .isString()
   .withMessage("not string")
   .trim()
-  .custom((id) => {
-    if (!isValidObjectId(id)) throw new Error("Invalid Id format");
-    return true;
+    // .isMongoId()
+    .custom((id) => {
+      if (!isValidObjectId(id)) throw new Error("Invalid Id format");
+      return true;
   })
   .withMessage("Provided ID is not valid");

@@ -5,6 +5,8 @@ import { usersRouter } from "./controllers/userController";
 import { testRouter } from "./controllers/testingController";
 import { SETTINGS } from "./settings";
 import { authRouter } from "./controllers/authController";
+import {commentsRouter} from "./controllers/commentsController";
+import {errorHandlerMiddleware} from "./middlewares/errorHandlerMiddleware";
 
 export const app = express();
 app.use(express.json());
@@ -14,3 +16,5 @@ app.use(SETTINGS.PATH.POSTS, postsRouter);
 app.use(SETTINGS.PATH.USERS, usersRouter);
 app.use(SETTINGS.PATH.TESTING, testRouter);
 app.use(SETTINGS.PATH.AUTH, authRouter);
+app.use(SETTINGS.PATH.COMMENTS, commentsRouter);
+app.use(errorHandlerMiddleware)

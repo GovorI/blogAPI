@@ -1,8 +1,8 @@
-import { Request, Response, Router } from "express";
+import {NextFunction, Request, Response, Router} from "express";
 import { userService } from "../services/userService";
 import { userQueryRepo } from "../repositories/userQueryRepo";
 import {
-  authMiddleware,
+  authBaseMiddleware,
   emailValidator,
   loginValidator,
   passwordValidator,
@@ -37,21 +37,22 @@ const userController = {
       throw new Error("Internal server error");
     }
   },
-  createUser: async (req: Request, res: Response) => {
+  createUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { login, password, email } = req.body;
       const userId = await userService.createUser({ login, password, email });
       const user = await userQueryRepo.getUserById(userId);
       console.log("userController.createUser---->", userId);
       res.status(201).send(user);
-    } catch (error: any) {
-      if (error.errors) {
-        res.status(400).json({
-          errorsMessages: error.errors,
-        });
-      } else {
-        res.status(500).send("Internal server error");
-      }
+    } catch (error) {
+      next(error);
+      // if (error.errors) {
+      //   res.status(400).json({
+      //     errorsMessages: error.errors,
+      //   });
+      // } else {
+      //   res.status(500).send("Internal server error");
+      // }
     }
   },
   deleteUser: async (req: Request, res: Response) => {
@@ -72,7 +73,7 @@ const userController = {
 usersRouter.get("/", userController.getUsers);
 usersRouter.post(
   "/",
-  authMiddleware,
+  authBaseMiddleware,
   loginValidator,
   passwordValidator,
   emailValidator,
@@ -81,7 +82,7 @@ usersRouter.post(
 );
 usersRouter.delete(
   "/:id",
-  authMiddleware,
+  authBaseMiddleware,
   userIdValidator,
   inputCheckErrorsMiddleware,
   userController.deleteUser

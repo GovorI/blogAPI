@@ -17,7 +17,7 @@ export function utf8ToBase64(str: string) {
   return codedAuth;
 }
 
-export const authMiddleware = (
+export const authBaseMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
@@ -54,8 +54,15 @@ export const loginOrEmailValidator = body("loginOrEmail")
   .isString()
   .withMessage("loginOrEmail must be a string")
   .trim()
-  .isLength({ min: 3, max: 10 })
-  .withMessage("login must be between 3 and 10 characters");
+  .custom((value) => {
+    if (value.includes("@")) {
+      return true;
+    }
+    if (value.length < 3 || value.length > 10) {
+      throw new Error("Login must be between 3 and 10 characters");
+    }
+    return true;
+  });
 export const loginValidator = body("login")
   .notEmpty()
   .withMessage("login is required")

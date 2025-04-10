@@ -56,7 +56,7 @@ export const blogRepository = {
       return null;
     }
   },
-  create: async (blogData: createBlogDTO) => {
+  create: async (blogData: blogSchemaDB) => {
     try {
       const result = await blogsCollection.insertOne(blogData);
       console.log("Create Blog --->", result);

@@ -4,8 +4,8 @@ import { setDB } from "../db/db_connection";
 export const testRouter = Router();
 
 const testController = {
-  setDB: (req: Request, res: Response) => {
-    setDB();
+  setDB: async (req: Request, res: Response) => {
+    await setDB();
     res.status(204).send("All data is deleted");
   },
 };
