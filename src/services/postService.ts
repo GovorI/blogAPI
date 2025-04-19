@@ -1,10 +1,7 @@
 import { postRepository } from "../repositories/postRepository";
 import { blogRepository } from "../repositories/blogRepository";
-import {postViewModel, postsMapWithPagination, commentsCollection} from "../db/db_connection";
-import { PaginationParams } from "../helpers/pagination";
 import { postQueryRepo } from "../repositories/postQueryRepo";
 import {ObjectId} from "mongodb";
-import {commentRepository} from "../repositories/commentRepository";
 
 export type createPostDTO = {
   title: string;
@@ -24,37 +21,6 @@ export type createCommentDTO = {
 };
 
 export const postService = {
-  // getAll: async ({
-  //   pageNumber,
-  //   pageSize,
-  //   sortBy,
-  //   sortDirection,
-  //   searchNameTerm,
-  // }: PaginationParams): Promise<postsMapWithPagination | null> => {
-  //   try {
-  //     const posts = await postRepository.getAll({
-  //       pageNumber,
-  //       pageSize,
-  //       sortBy,
-  //       sortDirection,
-  //       searchNameTerm,
-  //     });
-  //     console.log("Get all posts --->", posts);
-  //     return posts;
-  //   } catch (error) {
-  //     return null;
-  //   }
-  // },
-  // getById: async (id: string): Promise<postViewModel | null> => {
-  //   try {
-  //     const result = await postQueryRepo.getPostById(id);
-  //     if (!result) return null;
-  //     console.log("res getById --->", result);
-  //     return result;
-  //   } catch (error) {
-  //     return null;
-  //   }
-  // },
   create: async (postData: createPostDTO) => {
     const blog = await blogRepository.getById(postData.blogId);
 

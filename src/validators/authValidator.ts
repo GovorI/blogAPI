@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { body, param } from "express-validator";
 import { SETTINGS } from "../settings";
 import { isValidObjectId } from "mongoose";
+import {userRepository} from "../repositories/userRepository";
 
 const ADMIN_AUTH = SETTINGS.ADMIN_AUTH;
 
@@ -54,7 +55,7 @@ export const loginOrEmailValidator = body("loginOrEmail")
   .isString()
   .withMessage("loginOrEmail must be a string")
   .trim()
-  .custom((value) => {
+  .custom((value: string) => {
     if (value.includes("@")) {
       return true;
     }
@@ -70,22 +71,36 @@ export const loginValidator = body("login")
   .withMessage("login must be a string")
   .trim()
   .isLength({ min: 3, max: 10 })
-  .withMessage("login must be between 3 and 10 characters");
+  .withMessage("login must be between 3 and 10 characters")
+//     .custom(async (login: string)=>{
+//     const user = await userRepository.getUserByLogin(login)
+//     if(user){
+//         throw new Error("Login already exists");
+//     }
+//     return true
+// })
 export const passwordValidator = body("password")
   .notEmpty()
   .withMessage("password is required")
   .isString()
   .withMessage("password must be a string")
   .isLength({ min: 6, max: 20 })
-  .withMessage("password must be between 6 and 20 characters");
+  .withMessage("password must be between 6 and 20 characters")
+
 export const emailValidator = body("email")
   .notEmpty()
   .withMessage("email is required")
   .isString()
   .withMessage("email must be a string")
   .isEmail()
-  .withMessage("email must be valid");
-
+  .withMessage("email must be valid")
+//     .custom(async (email: string)=>{
+//     const user = await userRepository.getUserByEmail(email)
+//     if(user){
+//         throw new Error("Email already exists");
+//     }
+//     return true
+// })
 export const userIdValidator = param("id")
   .notEmpty()
   .isString()
@@ -97,3 +112,8 @@ export const userIdValidator = param("id")
     return true;
   })
   .withMessage("Provided ID is not valid");
+export const confirmCodeValidator = body("code")
+.notEmpty()
+.withMessage("confirm code is required")
+.isString()
+.withMessage("code must be a string")

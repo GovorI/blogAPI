@@ -10,11 +10,12 @@ export const errorHandlerMiddleware = (
     console.error("Error:", err);
 
     if (err instanceof DomainExceptions) {
+        console.log("Err message-------------->",err.message);
           res.status(err.status).json({
             errorsMessages: [
                 {
                     field: err.message.split(":")[0] || "general",
-                    message: err.message,
+                    message: err.message.split(':')[1],
                 },
             ],
         });

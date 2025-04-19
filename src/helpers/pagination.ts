@@ -25,3 +25,4 @@ export const paginationQueries = (req: Request): PaginationParams => ({
     ? req.query.searchEmailTerm.toString()
     : undefined,
 });
+

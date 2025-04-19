@@ -1,5 +1,7 @@
 import {Collection, MongoClient ,ObjectId} from "mongodb";
 import { SETTINGS } from "../settings";
+import {uuid} from "uuidv4";
+import dateFn from "date-fns";
 const mongoUri = SETTINGS.MONGODB;
 
 export const client = new MongoClient(mongoUri);
@@ -14,11 +16,23 @@ export type blogSchemaDB = {
 };
 export type userSchemaDB = {
   _id: ObjectId;
-  login: string;
-  password: string;
-  email: string;
-  createdAt: Date;
+  accountData: {
+    login: string;
+    password: string;
+    email: string;
+    createdAt: Date;
+  },
+  emailConfirmation: {
+    confirmCode: string,
+    expirationDate: Date,
+    isConfirmed: boolean
+  }
 };
+
+export type updateUserCodeConfirmByEmail = {
+  confirmCode: string;
+  expirationDate: Date;
+}
 
 export type postSchemaDB = {
   _id: ObjectId;
@@ -78,25 +92,33 @@ export type userViewModel = {
   createdAt: string;
 };
 
-export type blogsMapWithPagination = {
+export interface IPagination<I> {
   pagesCount: number;
   page: number;
   pageSize: number;
   totalCount: number;
-  items: blogViewModel[];
-};
+  items: I
+}
 
-export type postsMapWithPagination = {
-  pagesCount: number;
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  items: postViewModel[];
-};
+// export type blogsMapWithPagination = {
+//   pagesCount: number;
+//   page: number;
+//   pageSize: number;
+//   totalCount: number;
+//   items: blogViewModel[];
+// };
+//
+// export type postsMapWithPagination = {
+//   pagesCount: number;
+//   page: number;
+//   pageSize: number;
+//   totalCount: number;
+//   items: postViewModel[];
+// };
 
 type dbType = {
   blogs: Array<blogSchemaDB>;
-  posts: Array<postsMapWithPagination>;
+  posts: Array<postSchemaDB>;
 };
 
 export type ReadonlyDBType = {
@@ -160,7 +182,7 @@ export const setDB = async (dataset?: Partial<ReadonlyDBType>) => {
     await db.collection("users").insertMany(
       dataset.users.map((user) => ({
         ...user,
-        createdAt: user.createdAt || new Date().toISOString(),
+        createdAt: user.accountData.createdAt || new Date().toISOString(),
         _id: new ObjectId(),
       }))
     );

@@ -102,7 +102,7 @@ const postsController = {
     const postId = req.params.id;
     const content = req.body.content;
     const userId = req.user!._id.toString();
-    const login = req.user!.login;
+    const login = req.user!.accountData.login;
 
     console.log("postId from postControllet --- >",postId);
 

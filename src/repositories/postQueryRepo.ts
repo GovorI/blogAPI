@@ -1,19 +1,10 @@
 import { ObjectId } from "mongodb";
 import {
+  IPagination,
   postSchemaDB,
-  postsCollection, postsMapWithPagination, postViewModel,
-  userSchemaDB,
+  postsCollection, postViewModel,
 } from "../db/db_connection";
-import { userViewModel } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
-
-type pagingMapDTOComments = {
-  pagesCount: number;
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  items: userSchemaDB[];
-};
 
 type pagingMapDTOPosts = {
   totalCount: number;
@@ -29,8 +20,7 @@ export const postQueryRepo = {
                    sortBy,
                    sortDirection,
                    searchNameTerm,
-                 }: PaginationParams): Promise<postsMapWithPagination | null> => {
-    try {
+                 }: PaginationParams): Promise<IPagination<postViewModel[]> | null> => {
       const filter = searchNameTerm
           ? { name: { $regex: searchNameTerm, $options: "i" } }
           : {};
@@ -44,11 +34,8 @@ export const postQueryRepo = {
         postsCollection.countDocuments(filter),
       ]);
       return mapPostsWithPaging({ totalCount, pageSize, pageNumber, items });
-    } catch (error) {
-      return null;
-    }
   },
-  getPostById: async (id: string) => {
+  getPostById: async (id: string):Promise<postViewModel|null> => {
     const result = await postsCollection.findOne({ _id: new ObjectId(id) });
     console.log(result)
     if (!result) return null;
@@ -65,7 +52,7 @@ export const postQueryRepo = {
   getAllPostsForThisBlog: async (
       id: string,
       { pageNumber, pageSize, sortBy, sortDirection }: PaginationParams
-  ): Promise<postsMapWithPagination | null> => {
+  ): Promise<IPagination<postViewModel[]> | null> => {
     try {
       const filter = { blogId: id };
       const [items, totalCount] = await Promise.all([

@@ -40,19 +40,12 @@ const userController = {
   createUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { login, password, email } = req.body;
-      const userId = await userService.createUser({ login, password, email });
+      const userId = await userService.createUser({ login, password, email, isConfirmed: true });
       const user = await userQueryRepo.getUserById(userId);
       console.log("userController.createUser---->", userId);
       res.status(201).send(user);
     } catch (error) {
       next(error);
-      // if (error.errors) {
-      //   res.status(400).json({
-      //     errorsMessages: error.errors,
-      //   });
-      // } else {
-      //   res.status(500).send("Internal server error");
-      // }
     }
   },
   deleteUser: async (req: Request, res: Response) => {
@@ -75,8 +68,8 @@ usersRouter.post(
   "/",
   authBaseMiddleware,
   loginValidator,
-  passwordValidator,
   emailValidator,
+  passwordValidator,
   inputCheckErrorsMiddleware,
   userController.createUser
 );

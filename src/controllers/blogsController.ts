@@ -7,7 +7,7 @@ import {
 import { paginationQueries, PaginationParams } from "../helpers/pagination";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
 import { authBaseMiddleware } from "../validators/authValidator";
-import { blogViewModel, blogsMapWithPagination } from "../db/db_connection";
+import {blogViewModel, IPagination} from "../db/db_connection";
 import { blogService } from "../services/blogService";
 import { postService } from "../services/postService";
 import {
@@ -16,6 +16,7 @@ import {
   shortDescriptionValidator,
 } from "../validators/postValidators";
 import {postQueryRepo} from "../repositories/postQueryRepo";
+import {blogQueryRepo} from "../repositories/blogQueryRepo";
 
 export const blogsRouter = Router();
 
@@ -30,7 +31,7 @@ const blogsController = {
         searchNameTerm,
       }: PaginationParams = paginationQueries(req);
       console.log("paginationQueries(req) --->", paginationQueries(req));
-      const blogs: blogsMapWithPagination = await blogService.getAll({
+      const blogs: IPagination<blogViewModel[]> = await blogQueryRepo.getAll({
         pageNumber,
         pageSize,
         sortBy,
@@ -56,7 +57,7 @@ const blogsController = {
     try {
       const blogId = req.params.id;
       const updateData = req.body;
-      const blog: blogViewModel | null = await blogService.getById(blogId);
+      const blog: blogViewModel | null = await blogQueryRepo.getById(blogId);
 
       if (!blog) {
         res.sendStatus(404);
@@ -76,7 +77,7 @@ const blogsController = {
   },
   getById: async (req: Request, res: Response) => {
     try {
-      const blog: blogViewModel | null = await blogService.getById(
+      const blog: blogViewModel | null = await blogQueryRepo.getById(
         req.params.id
       );
       console.log("getbyid from blogController --->", blog);
@@ -94,7 +95,7 @@ const blogsController = {
   deleteById: async (req: Request, res: Response) => {
     try {
       const blogId = req.params.id;
-      const blog: blogViewModel | null = await blogService.getById(blogId);
+      const blog: blogViewModel | null = await blogQueryRepo.getById(blogId);
       if (!blog) {
         res.status(404).send();
         return;
@@ -111,7 +112,7 @@ const blogsController = {
     try {
       const { title, shortDescription, content } = req.body;
       const blogId = req.params.id;
-      const blog: blogViewModel | null = await blogService.getById(blogId);
+      const blog: blogViewModel | null = await blogQueryRepo.getById(blogId);
 
       if (!blog) {
         res.status(404).send("blog not exist");
@@ -138,7 +139,7 @@ const blogsController = {
       const id = req.params.id;
       const { pageNumber, pageSize, sortBy, sortDirection, searchNameTerm } =
         paginationQueries(req);
-      const blogExists = await blogService.getById(id);
+      const blogExists = await blogQueryRepo.getById(id);
       if (!blogExists) {
         res.status(404).json({
           errorsMessages: [{ field: "id", message: "Blog not found" }],

@@ -17,9 +17,9 @@ export const userQueryRepo = {
     if(!user) {throw new DomainExceptions(404, 'User not found')}
     return {
       id: user._id.toString(),
-      login: user.login,
-      email: user.email,
-      createdAt: user.createdAt.toISOString(),
+      login: user.accountData.login,
+      email: user.accountData.email,
+      createdAt: user.accountData.createdAt.toISOString(),
     };
   },
   getUsers: async ({
@@ -65,9 +65,9 @@ export const userQueryRepo = {
 function mapUserToViewModel(user: userSchemaDB): userViewModel {
   return {
     id: user._id.toString(),
-    login: user.login,
-    email: user.email,
-    createdAt: user.createdAt.toISOString(),
+    login: user.accountData.login,
+    email: user.accountData.email,
+    createdAt: user.accountData.createdAt.toISOString(),
   };
 }
 

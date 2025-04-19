@@ -1,18 +1,20 @@
 import {NextFunction, Request, Response, Router} from "express";
-import { userService } from "../services/userService";
 import {
-  loginOrEmailValidator,
-  passwordValidator,
+    confirmCodeValidator,
+    emailValidator,
+    loginOrEmailValidator, loginValidator,
+    passwordValidator,
 } from "../validators/authValidator";
 import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
 import { authJWTMiddleware } from "../middlewares/authMiddleware";
+import {authService} from "../services/authService";
 
 export const authRouter = Router();
 
 const authController = {
   login: async (req: Request, res: Response, next: NextFunction) => {
     try{
-      const result = await userService.login({
+      const result = await authService.login({
         loginOrEmail: req.body.loginOrEmail,
         password: req.body.password,
       });
@@ -32,8 +34,8 @@ const authController = {
         return;
       }
       const result = {
-        email: req.user?.email,
-        login: req.user?.login,
+        email: req.user?.accountData.email,
+        login: req.user?.accountData.login,
         userId: req.user?._id,
       };
       res.status(200).json(result);
@@ -41,6 +43,44 @@ const authController = {
       console.log(error);
     }
   },
+  registration: async (req: Request, res: Response, next: NextFunction) => {
+   try {
+    const login = req.body.login;
+    const password = req.body.password;
+    const email = req.body.email;
+    console.log({ login, password, email });
+    const result = await authService.registration({login, password, email})
+    if (result) {
+      res.sendStatus(204)
+      return;
+    }
+    res.status(500).send({massage: 'Failed to send email'})
+   }catch (error) {
+     next(error)
+   }
+  },
+  emailResending: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const email = req.body.email;
+        const isResending = await authService.emailResending(email);
+        if(isResending) {
+            res.sendStatus(204)
+        }
+    }catch (error) {
+        next(error)
+    }
+  },
+    confirmation: async (req: Request, res: Response, next: NextFunction) => {
+        try{
+            const confirmCode = req.body.code
+            const result = await authService.confirmation(confirmCode)
+            if (result) {
+                res.sendStatus(204)
+            }
+        }catch (error) {
+            next(error)
+        }
+    },
 };
 
 authRouter.post(
@@ -51,3 +91,9 @@ authRouter.post(
   authController.login
 );
 authRouter.get("/me", authJWTMiddleware, authController.me);
+authRouter.post('/registration', loginValidator, passwordValidator, emailValidator,
+    inputCheckErrorsMiddleware, authController.registration)
+authRouter.post('/registration-confirmation',confirmCodeValidator,
+    inputCheckErrorsMiddleware,  authController.confirmation)
+authRouter.post('/registration-email-resending', emailValidator,
+    inputCheckErrorsMiddleware, authController.emailResending)
