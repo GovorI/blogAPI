@@ -10,11 +10,13 @@
     "jest": "jest --runInBand"
   },
   "dependencies": {
+    "@types/cookie-parser": "^1.4.8",
     "@types/jest": "^29.5.14",
     "@types/mongodb": "^4.0.7",
     "@types/nodemailer": "^6.4.17",
     "@types/supertest": "^6.0.2",
     "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

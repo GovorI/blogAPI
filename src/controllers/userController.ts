@@ -33,6 +33,7 @@ const userController = {
         searchEmailTerm,
       });
       res.status(200).send(users);
+      return
     } catch (error) {
       throw new Error("Internal server error");
     }
@@ -44,11 +45,12 @@ const userController = {
       const user = await userQueryRepo.getUserById(userId);
       console.log("userController.createUser---->", userId);
       res.status(201).send(user);
+      return
     } catch (error) {
       next(error);
     }
   },
-  deleteUser: async (req: Request, res: Response) => {
+  deleteUser: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const deletedUser = await userService.deleteUser(req.params.id);
       if (deletedUser) {
@@ -58,7 +60,7 @@ const userController = {
       res.sendStatus(404);
       return;
     } catch (error) {
-      res.status(500).send("Internal server error");
+      next(error)
     }
   },
 };

@@ -13,11 +13,11 @@ export const authJWTMiddleware = async (
       return;
     }
     const token = req.headers.authorization.split(" ")[1];
-    const userId = await jwtService.getUserIdByToken(token);
-    if (!userId) {
-      res.sendStatus(401);
-      return;
-    }
+    const userId = await jwtService.checkToken(token);
+    // if (!userId) {
+    //   res.sendStatus(401);
+    //   return;
+    // }
     const user = await userService.getUserById(userId);
     console.log(user);
     if (!user) {
@@ -27,6 +27,7 @@ export const authJWTMiddleware = async (
     req.user = user;
     next();
   } catch (error) {
+    next(error);
     console.log(error);
   }
 };

@@ -12,10 +12,12 @@ const commentsController = {
            console.log(req.params.commentId);
             const result = await commentQueryRepo.getCommentById(req.params.id);
            console.log("get CommentById --->",result)
-            if (!result) {
-                res.sendStatus(404)
-            }
+            // if (!result) {
+            //     res.sendStatus(404)
+            //     return
+            // }
             res.status(200).send(result)
+           return
         }catch(error){
            next(error)
        }
@@ -26,11 +28,12 @@ const commentsController = {
             const content = req.body.content
             const userId = req.user!._id.toString()
             const isUpdated = await commentService.updateComment({commentId, content, userId})
-            if (!isUpdated) {
-                res.sendStatus(404)
-                return
-            }
+            // if (!isUpdated) {
+            //     res.sendStatus(404)
+            //     return
+            // }
             res.sendStatus(204)
+            return
         }catch (error){
             next(error)
         }
@@ -41,11 +44,12 @@ const commentsController = {
             const commentId = req.params.id
             const userId = req.user!._id.toString()
             const isDelete = await commentService.deleteCommentById(userId, commentId)
-            if (!isDelete) {
-                res.sendStatus(404)
-                return
-            }
+            // if (!isDelete) {
+            //     res.sendStatus(404)
+            //     return
+            // }
             res.sendStatus(204)
+            return
         }catch (error) {
             next(error);
         }

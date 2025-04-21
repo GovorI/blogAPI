@@ -7,9 +7,11 @@ import { SETTINGS } from "./settings";
 import { authRouter } from "./controllers/authController";
 import {commentsRouter} from "./controllers/commentsController";
 import {errorHandlerMiddleware} from "./middlewares/errorHandlerMiddleware";
+import cookieParser from "cookie-parser";
 
 export const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(SETTINGS.PATH.BLOGS, blogsRouter);
 app.use(SETTINGS.PATH.POSTS, postsRouter);
