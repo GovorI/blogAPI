@@ -1,19 +1,18 @@
 import {userSchemaDB} from "../db/db_connection";
 import jwt from "jsonwebtoken";
 import {SETTINGS} from "../settings";
-import {ObjectId} from "mongodb";
 import {DomainExceptions} from "../helpers/DomainExceptions";
 
 export const jwtService = {
-    createJwt: async (user: userSchemaDB, lifeTime: string) => {
-        return jwt.sign({userId: user._id}, SETTINGS.JWT_SECRET, {
+    createJwt: async (user: userSchemaDB, deviceId: string, lifeTime: string) => {
+        return jwt.sign({userId: user._id, deviceId}, SETTINGS.JWT_SECRET, {
             expiresIn: lifeTime,
         });
     },
     checkToken: async (token: string) => {
         try {
             const result: any =  jwt.verify(token, SETTINGS.JWT_SECRET);
-            return result.userId;
+            return result;
         } catch (error) {
             console.log(error);
             if (error instanceof jwt.TokenExpiredError) {

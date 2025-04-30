@@ -13,10 +13,14 @@ export const authRouter = Router();
 
 const authController = {
     login: async (req: Request, res: Response, next: NextFunction) => {
+        const userAgent = req.headers["user-agent"] || 'Unknown User Agent'
+        const ip = req.ip || ''
         try {
             const result = await authService.login({
                 loginOrEmail: req.body.loginOrEmail,
                 password: req.body.password,
+                userAgent,
+                ip
             });
             console.log(result)
             if (result) {
@@ -29,17 +33,12 @@ const authController = {
                 res.status(200).json({accessToken: result.accessToken});
                 return;
             }
-            // res.sendStatus(401);
         } catch (error) {
             next(error)
         }
     },
     me: (req: Request, res: Response, next: NextFunction) => {
         try {
-            // if (!req.user) {
-            //     res.sendStatus(401);
-            //     return;
-            // }
             const result = {
                 email: req.user?.accountData.email,
                 login: req.user?.accountData.login,
@@ -63,8 +62,6 @@ const authController = {
                 res.sendStatus(204)
                 return;
             }
-            // res.status(500).send({massage: 'Failed to send email'})
-            // return
         } catch (error) {
             next(error)
         }
@@ -95,12 +92,13 @@ const authController = {
     },
     updateRefreshToken: async (req: Request, res: Response, next: NextFunction) => {
         const refreshToken = req.cookies.refreshToken;
+        const ip = req.ip || ''
         if (!refreshToken) {
             res.sendStatus(401)
             return;
         }
         try {
-            const tokens = await authService.updateRefreshToken(refreshToken, next)
+            const tokens = await authService.updateRefreshToken(refreshToken, ip, next)
             console.log(tokens)
             if (tokens) {
                 res.cookie('refreshToken', tokens.refreshToken, {httpOnly: true, secure: true});

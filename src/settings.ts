@@ -11,6 +11,7 @@ export const SETTINGS = {
     USERS: "/users",
     COMMENTS: "/comments",
     AUTH: "/auth",
+    SECURITY: "/security",
     TESTING: "/testing/all-data",
   },
   ADMIN_AUTH: "admin:qwerty",

@@ -7,10 +7,13 @@ import {DomainExceptions} from "../helpers/DomainExceptions";
 import {userService} from "./userService";
 import {emailForm, sendEmail} from "./nodemailer.service";
 import {NextFunction} from "express";
+import {sessionRepository} from "../repositories/sessionRepository";
 
 type authUserDTO = {
     loginOrEmail: string;
     password: string;
+    userAgent: string;
+    ip: string;
 };
 
 type registrationDTO = {
@@ -34,19 +37,25 @@ export const authService = {
         if (!isCredentials) {
             throw new DomainExceptions(401, "wrong login or password")
         }
+        const deviceId = uuid()
         const [accessToken, refreshToken] = await Promise.all([
-            jwtService.createJwt(user, "10s"),
-            jwtService.createJwt(user, "20s"),
+            jwtService.createJwt(user, deviceId, "10s"),
+            jwtService.createJwt(user, deviceId, "20s"), //сделать отдельн создание
         ])
-        await userRepository.setRefreshToken(user._id.toString(), refreshToken)
+        await sessionRepository.createSession({
+            userId: user._id.toString(),
+            deviceId: deviceId,
+            iat: new Date(),
+            deviceName: authData.userAgent,
+            ip: authData.ip,
+            exp: new Date(Date.now() + 20 * 1000)
+        })
+        // await userRepository.setRefreshToken(user._id.toString(), refreshToken)
         return {
             accessToken: accessToken,
             refreshToken: refreshToken
         }
     },
-    // me: async (authData: authUserDTO) => {
-    //
-    // },
     registration: async (userData: registrationDTO) => {
         console.log("authService", userData);
         const createdUserId = await userService.createUser(userData);
@@ -112,19 +121,34 @@ export const authService = {
         const result = await userRepository.updateConfirmation(user._id.toString())
         return !!result
     },
-    updateRefreshToken: async (refreshToken: string, next: NextFunction) => {
-        const user = await userRepository.getUserByRefreshToken(refreshToken);
-        console.log(user)
-        if (!user) {
-            throw new DomainExceptions(401, "refresh-token:wrong refresh token")
-        }
+    updateRefreshToken: async (refreshToken: string, ip: string, next: NextFunction) => {
         try {
-            await jwtService.checkToken(refreshToken)
+            const payload = await jwtService.checkToken(refreshToken)
+            const user = payload.user
+            const deviceId = payload.deviceId
+            // const user = await userRepository.getUserByRefreshToken(refreshToken);
+            console.log(user)
+            // if (!user) {
+            //     throw new DomainExceptions(401, "refresh-token:wrong refresh token")
+            // }
+            const session = await sessionRepository.getSessionByDeviceId(deviceId);
+            if (!session || session.exp < new Date()) {
+                throw new DomainExceptions(401, "refresh-token: invalid or expired")
+            }
+            if (session.iat !== payload.iat) {
+                throw new DomainExceptions(401, "refresh-token: invalid token version")
+            }
+            // await jwtService.checkToken(refreshToken)
             const [accessToken, newRefreshToken] = await Promise.all([
-                jwtService.createJwt(user, "10s"),
-                jwtService.createJwt(user, "20s"),
+                jwtService.createJwt(user, deviceId, "10s"),
+                jwtService.createJwt(user, deviceId, "20s"),
             ])
-            await userRepository.setRefreshToken(user._id.toString(), newRefreshToken)
+            await sessionRepository.updateSession(deviceId, {
+                iat: new Date(),
+                exp: new Date(Date.now() + 20 * 1000),
+                ip: ip
+            })
+            // await userRepository.setRefreshToken(user._id.toString(), newRefreshToken)
             return {
                 accessToken: accessToken,
                 refreshToken: newRefreshToken
@@ -136,7 +160,7 @@ export const authService = {
         }
     },
     logout: async (refreshToken: string, next: NextFunction) => {
-        console.log("get user by refresh token---->",refreshToken)
+        console.log("get user by refresh token---->", refreshToken)
         const user = await userRepository.getUserByRefreshToken(refreshToken);
         if (!user) {
             throw new DomainExceptions(401, "refresh-token:wrong refresh token")
