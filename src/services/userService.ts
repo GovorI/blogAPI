@@ -28,7 +28,6 @@ export const userService = {
         if (existingUserByEmail) {
             throw new DomainExceptions(400, 'email:Email already exists');
         }
-        console.log(userData)
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         const newUser = {
             _id: new ObjectId(),

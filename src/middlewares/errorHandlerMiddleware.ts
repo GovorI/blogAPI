@@ -7,10 +7,9 @@ export const errorHandlerMiddleware = (
     res: Response,
     next: NextFunction
 ):void => {
-    console.error(`Error in ${req.method} ${req.path}:`, err);
+    // console.error(`Error in ${req.method} ${req.path}:`, err);
 
     if (err instanceof DomainExceptions) {
-        console.log("Err message-------------->",err.message);
           res.status(err.status).json({
             errorsMessages: [
                 {

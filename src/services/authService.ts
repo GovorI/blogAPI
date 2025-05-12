@@ -8,6 +8,7 @@ import {userService} from "./userService";
 import {emailForm, sendEmail} from "./nodemailer.service";
 import {NextFunction} from "express";
 import {sessionRepository} from "../repositories/sessionRepository";
+import {sessionsService} from "./sessionService";
 
 type authUserDTO = {
     loginOrEmail: string;
@@ -39,18 +40,18 @@ export const authService = {
         }
         const deviceId = uuid()
         const [accessToken, refreshToken] = await Promise.all([
-            jwtService.createJwt(user, deviceId, "10s"),
-            jwtService.createJwt(user, deviceId, "20s"), //сделать отдельн создание
+            jwtService.createJwt(user._id.toString(), deviceId, "10s"),
+            jwtService.createJwt(user._id.toString(), deviceId, "20s"), //сделать отдельн создание
         ])
+        const token = jwtService.decodeToken(refreshToken)
         await sessionRepository.createSession({
             userId: user._id.toString(),
             deviceId: deviceId,
-            iat: new Date(),
+            iat: token.iat,
             deviceName: authData.userAgent,
             ip: authData.ip,
-            exp: new Date(Date.now() + 20 * 1000)
+            exp: token.exp //из токена
         })
-        // await userRepository.setRefreshToken(user._id.toString(), refreshToken)
         return {
             accessToken: accessToken,
             refreshToken: refreshToken
@@ -68,18 +69,19 @@ export const authService = {
         console.log(isSendEmail);
         if (!isSendEmail) {
             await userRepository.deleteUser(createdUserId);
-            throw new DomainExceptions(500, "email: does not send email")
+            throw new DomainExceptions(500, "email:does not send email")
         }
         return true;
     },
     emailResending: async (email: string) => {
         const user = await userRepository.getUserByEmail(email);
         if (!user) {
-            throw new DomainExceptions(400, 'email:User with this email not found')
+            // throw new DomainExceptions(400, 'email:User with this email not found')
+            return true
         }
         if (user.emailConfirmation.isConfirmed) {
-            throw new DomainExceptions(400, "email:email already confirmed")
-
+            // throw new DomainExceptions(400, "email:email already confirmed")
+            return true
         }
         const confirmCode = uuid()
         try {
@@ -124,28 +126,24 @@ export const authService = {
     updateRefreshToken: async (refreshToken: string, ip: string, next: NextFunction) => {
         try {
             const payload = await jwtService.checkToken(refreshToken)
-            const user = payload.user
+            const userId = payload.userId
             const deviceId = payload.deviceId
-            // const user = await userRepository.getUserByRefreshToken(refreshToken);
-            console.log(user)
-            // if (!user) {
-            //     throw new DomainExceptions(401, "refresh-token:wrong refresh token")
-            // }
             const session = await sessionRepository.getSessionByDeviceId(deviceId);
-            if (!session || session.exp < new Date()) {
-                throw new DomainExceptions(401, "refresh-token: invalid or expired")
+            if (!session || Number(session.exp) < Number(dateFn.getUnixTime(new Date()))) {
+                throw new DomainExceptions(401, "refresh-token:invalid or expired")
             }
             if (session.iat !== payload.iat) {
-                throw new DomainExceptions(401, "refresh-token: invalid token version")
+                throw new DomainExceptions(401, "refresh-token:invalid token version")
             }
-            // await jwtService.checkToken(refreshToken)
             const [accessToken, newRefreshToken] = await Promise.all([
-                jwtService.createJwt(user, deviceId, "10s"),
-                jwtService.createJwt(user, deviceId, "20s"),
+                jwtService.createJwt(userId, deviceId, "10s"),
+                jwtService.createJwt(userId, deviceId, "20s"),
             ])
+            const token = jwtService.decodeToken(newRefreshToken)
+            
             await sessionRepository.updateSession(deviceId, {
-                iat: new Date(),
-                exp: new Date(Date.now() + 20 * 1000),
+                iat: token.iat,
+                exp: token.exp,
                 ip: ip
             })
             // await userRepository.setRefreshToken(user._id.toString(), newRefreshToken)
@@ -160,14 +158,18 @@ export const authService = {
         }
     },
     logout: async (refreshToken: string, next: NextFunction) => {
-        console.log("get user by refresh token---->", refreshToken)
-        const user = await userRepository.getUserByRefreshToken(refreshToken);
-        if (!user) {
-            throw new DomainExceptions(401, "refresh-token:wrong refresh token")
-        }
         try {
-            await jwtService.checkToken(refreshToken)
-            await userRepository.setRefreshToken(user._id.toString(), null);
+            const payload = await jwtService.checkToken(refreshToken)
+            const deviceId = payload.deviceId
+            const session = await sessionRepository.getSessionByDeviceId(deviceId);
+            if (!session || Number(session.exp) < Number(dateFn.getUnixTime(new Date()))) {
+                throw new DomainExceptions(401, "refresh-token:invalid or expired")
+            }
+            if (session.iat !== payload.iat) {
+                throw new DomainExceptions(401, "refresh-token:invalid token version")
+            }
+
+            await sessionsService.deleteSessionByDeviceId(refreshToken, deviceId)
             return true
         } catch (err) {
             console.log("failed to logout", err);

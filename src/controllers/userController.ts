@@ -43,7 +43,6 @@ const userController = {
       const { login, password, email } = req.body;
       const userId = await userService.createUser({ login, password, email, isConfirmed: true });
       const user = await userQueryRepo.getUserById(userId);
-      console.log("userController.createUser---->", userId);
       res.status(201).send(user);
       return
     } catch (error) {

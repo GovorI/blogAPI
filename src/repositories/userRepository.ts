@@ -18,7 +18,6 @@ export const userRepository = {
     },
     getUserByEmail: async (email: string) => {
         const res = await usersCollection.findOne({"accountData.email": email});
-        console.log("userRepository.getUserByEmail", res);
         return res;
     },
     getUserByLogin: async (login: string) => {
@@ -48,7 +47,6 @@ export const userRepository = {
             },
 
         });
-        console.log("createUser Repo ---- > ", res.insertedId);
         return res.insertedId;
     },
     updateUserCodeConfirmByEmail: async (email: string, newUserData: updateUserCodeConfirmByEmail) => {

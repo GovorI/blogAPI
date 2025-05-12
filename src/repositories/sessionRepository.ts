@@ -5,15 +5,15 @@ import {DomainExceptions} from "../helpers/DomainExceptions";
 export type createSessionDTO = {
     userId: string,
     deviceId: string,
-    iat: Date,
+    iat: number,
     deviceName: string,
     ip: string,
-    exp: Date,
+    exp: number,
 }
 
 export type updateSessionDTO = {
-    iat: Date,
-    exp: Date,
+    iat: number,
+    exp: number,
     ip: string
 }
 
@@ -51,7 +51,7 @@ export const sessionRepository = {
             return session.deviceId === activeDeviceId
         })
         if (!activeSessionExists) {
-            throw new DomainExceptions(404, 'session: session not found')
+            throw new DomainExceptions(404, 'session:session not found')
         }
         const result = await sessionsCollection.deleteMany({
             userId: userId,
@@ -60,12 +60,12 @@ export const sessionRepository = {
         return result.deletedCount > 0
     },
     deleteSessionByDeviceId: async (userId: string, device_Id: string) => {
-        const sessions = await sessionsCollection.find({userId: userId}).toArray();
-        const activeSessionExists = sessions.some(session => {
-            return session.deviceId === device_Id
-        })
-        if (!activeSessionExists) {
-            throw new DomainExceptions(404, 'session: session not found')
+        const session = await sessionsCollection.findOne({deviceId: device_Id})
+        if(!session){
+            throw new DomainExceptions(404, 'session:session not found')
+        }
+        if(session.userId !== userId){
+            throw new DomainExceptions(403, 'forbidden:user not owner session')
         }
         const result = await sessionsCollection.deleteOne({
             userId: userId,

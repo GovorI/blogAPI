@@ -59,17 +59,17 @@ export type sessionSchemaDB = {
     _id: ObjectId;
     userId: string;
     deviceId: string;
-    iat: Date;
+    iat: number;
     deviceName: string;
     ip: string;
-    exp: Date;
+    exp: number;
 }
 
 export type sessionViewModel = {
+    deviceId: string;
+    lastActiveDate: Date;
     ip: string;
     title: string;
-    lastActiveDate: string;
-    deviceId: string;
 }
 
 export type postViewModel = {

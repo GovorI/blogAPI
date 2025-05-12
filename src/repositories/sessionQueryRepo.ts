@@ -6,10 +6,10 @@ export const sessionQueryRepo = {
         const sessions = await sessionsCollection.find({userId: userId}).toArray()
         return sessions.map((session: sessionSchemaDB): sessionViewModel => {
             return {
-                ip: session.ip,
-                title: session.deviceName,
-                lastActiveDate: session.iat.toISOString(),
                 deviceId: session.deviceId,
+                ip: session.ip,
+                lastActiveDate: new Date(session.iat*1000),
+                title: session.deviceName,
             }
         })
     },

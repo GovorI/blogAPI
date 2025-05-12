@@ -39,13 +39,11 @@ const securityController = {
     deleteSessionByDeviceId: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const refreshToken = req.cookies.refreshToken;
-            console.log(refreshToken);
             if (!refreshToken) {
                 res.sendStatus(401)
                 return
             }
             const deviceId = req.params.id
-            console.log(deviceId)
             const isDeleted = await sessionsService.deleteSessionByDeviceId(refreshToken, deviceId)
             if(isDeleted) {
                 res.sendStatus(204)
