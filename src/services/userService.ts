@@ -1,9 +1,11 @@
 import bcrypt from "bcrypt";
-import {userRepository} from "../repositories/userRepository";
-import {DomainExceptions} from "../helpers/DomainExceptions";
-import {uuid} from "uuidv4";
 import dateFn from "date-fns";
+import {uuid} from "uuidv4";
 import {ObjectId} from "mongodb";
+import {DomainExceptions} from "../helpers/DomainExceptions";
+import {UserRepository} from "../repositories/userRepository";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
 export type createUserDTO = {
     login: string;
@@ -12,14 +14,17 @@ export type createUserDTO = {
     isConfirmed?: boolean;
 };
 
-export const userService = {
-    getUserById: async (userId: string) => {
-        return await userRepository.getUserById(userId);
-    },
-    createUser: async (userData: createUserDTO) => {
+@injectable()
+export class UserService {
+    constructor(protected userRepository: UserRepository) {
+    }
+    async getUserById(userId: string) {
+        return await this.userRepository.getUserById(userId);
+    }
+    async createUser(userData: createUserDTO) {
         const [existingUserByLogin, existingUserByEmail] = await Promise.all([
-            userRepository.getUserByLogin(userData.login),
-            userRepository.getUserByEmail(userData.email),
+            this.userRepository.getUserByLogin(userData.login),
+            this.userRepository.getUserByEmail(userData.email),
         ]);
         if (existingUserByLogin) {
             throw new DomainExceptions(400, 'login:Login already exists');
@@ -46,12 +51,13 @@ export const userService = {
             }
         }
 
-        const createdUserId = await userRepository.createUser(newUser);
+        const createdUserId = await this.userRepository.createUser(newUser);
         return createdUserId.toString();
-    },
-    deleteUser: async (id: string) => {
-        const res = await userRepository.deleteUser(id);
+    }
+
+    async deleteUser(id: string) {
+        const res = await this.userRepository.deleteUser(id);
         if (res) return true;
         return false;
-    },
-};
+    }
+}

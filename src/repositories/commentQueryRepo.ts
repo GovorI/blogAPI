@@ -1,11 +1,13 @@
-import { ObjectId } from "mongodb";
+import {ObjectId} from "mongodb";
 import {
     commentSchemaDB,
     commentsCollection,
     commentViewModel,
 } from "../db/db_connection";
-import { PaginationParams } from "../helpers/pagination";
+import {PaginationParams} from "../helpers/pagination";
 import {DomainExceptions} from "../helpers/DomainExceptions";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
 
 type pagingMapDTO = {
@@ -15,10 +17,13 @@ type pagingMapDTO = {
     items: commentSchemaDB[];
 };
 
-export const commentQueryRepo = {
-    getCommentById: async (id: string): Promise<commentViewModel> => {
-        const comment = await commentsCollection.findOne({ _id: new ObjectId(id) });
-        if(!comment){throw new DomainExceptions(404, "Could not find comment")}
+@injectable()
+export class CommentQueryRepo {
+    async getCommentById(id: string): Promise<commentViewModel> {
+        const comment = await commentsCollection.findOne({_id: new ObjectId(id)});
+        if (!comment) {
+            throw new DomainExceptions(404, "Could not find comment")
+        }
         return {
             id: comment._id.toString(),
             content: comment.content,
@@ -28,13 +33,14 @@ export const commentQueryRepo = {
             },
             createdAt: comment.createdAt.toISOString(),
         };
-    },
-    getCommentsWithPagination: async (postId: string, {pageNumber, pageSize, sortBy, sortDirection}: PaginationParams )=>{
+    }
 
-        const [items,totalCount] = await Promise.all([
+    async getCommentsWithPagination(postId: string, {pageNumber, pageSize, sortBy, sortDirection}: PaginationParams) {
+
+        const [items, totalCount] = await Promise.all([
             await commentsCollection
                 .find({postId: postId})
-                .sort({ [sortBy]: sortDirection })
+                .sort({[sortBy]: sortDirection})
                 .skip((pageNumber - 1) * pageSize)
                 .limit(pageSize)
                 .toArray(),
@@ -43,7 +49,7 @@ export const commentQueryRepo = {
         console.log(items)
         return mapCommentsWithPaging({totalCount, pageNumber, pageSize, items})
     }
-};
+}
 
 function mapToViewModel(comment: commentSchemaDB): commentViewModel {
     return {
@@ -58,11 +64,11 @@ function mapToViewModel(comment: commentSchemaDB): commentViewModel {
 }
 
 function mapCommentsWithPaging({
-                                totalCount,
-                                pageSize,
-                                pageNumber,
-                                items,
-                            }: pagingMapDTO) {
+                                   totalCount,
+                                   pageSize,
+                                   pageNumber,
+                                   items,
+                               }: pagingMapDTO) {
     return {
         pagesCount: Math.ceil(totalCount / pageSize),
         page: pageNumber,

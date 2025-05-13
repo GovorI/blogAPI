@@ -3,8 +3,9 @@ import {req} from "../src/helpers/test_helpers";
 import {afterAll, beforeAll, describe, expect, it} from "@jest/globals";
 import {SETTINGS} from "../src/settings";
 import {utf8ToBase64} from "../src/validators/authValidator";
-import {userRepository} from "../src/repositories/userRepository";
 import {DomainExceptions} from "../src/helpers/DomainExceptions";
+import {container} from "../src/compositionRoot";
+import {UserRepository} from "../src/repositories/userRepository";
 
 const USERS = SETTINGS.PATH.USERS;
 const AUTH = SETTINGS.PATH.AUTH;
@@ -18,6 +19,8 @@ const adminBase64 = utf8ToBase64(SETTINGS.ADMIN_AUTH);
 
 describe(AUTH, () => {
     let newUser: userSchemaDB;
+    let token : string;
+    const userRepository = container.get<UserRepository>(UserRepository);
 
     beforeAll(async () => {
         await runDb();
@@ -65,37 +68,8 @@ describe(AUTH, () => {
                 email: "govorip@gmail.com",
             })
             .expect(204);
-        let result = await userRepository.getUserByEmail("govorip@gmail.com");
-        if (!result) {
-            console.log("create user -------->", result)
-            throw new DomainExceptions(404, "email:User with this email not found");
-        }
-        expect(result).toMatchObject({
-            accountData: {
-                login: "Ilya",
-                password: expect.any(String),
-                email: "govorip@gmail.com",
-                createdAt: expect.any(Date),
-            },
-            emailConfirmation: {
-                confirmCode: expect.any(String),
-                expirationDate: expect.any(Date),
-                isConfirmed: false
-            }
-        })
-        newUser = result;
-        console.log("+ POST registration new user with correct data", newUser);
-    });
-
-    it("+ POST registration new user with correct data", async () => {
-        const res = await req
-            .post(AUTH_REGISTRATION)
-            .send({
-                login: "Ilya",
-                password: "1234567",
-                email: "govorip@gmail.com",
-            })
-            .expect(204);
+        token = res.body.accessToken;
+        console.log(token, res.body.accessToken)
         let result = await userRepository.getUserByEmail("govorip@gmail.com");
         if (!result) {
             console.log("create user -------->", result)
@@ -129,7 +103,7 @@ describe(AUTH, () => {
         newUser.emailConfirmation.confirmCode = user!.emailConfirmation.confirmCode;
     });
 
-    it.skip("+ POST confirm email with correct code", async () => {
+    it("+ POST confirm email with correct code", async () => {
         await req
             .post(AUTH_CONFIRM)
             .send({

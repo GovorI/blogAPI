@@ -1,13 +1,17 @@
 import {jwtService} from "./jwtService";
-import {sessionQueryRepo} from "../repositories/sessionQueryRepo";
 import {sessionViewModel} from "../db/db_connection";
-import {DomainExceptions} from "../helpers/DomainExceptions";
+import {injectable} from "inversify";
+import "reflect-metadata"
+import {SessionQueryRepo} from "../repositories/sessionQueryRepo";
 
-export const sessionsQueryService = {
-    getActiveSessions: async (refreshToken: string): Promise<sessionViewModel[]> => {
+@injectable()
+export class SessionsQueryService {
+    constructor(protected sessionQueryRepo: SessionQueryRepo  ) {
+    }
+    async getActiveSessions(refreshToken: string): Promise<sessionViewModel[]> {
         const payload = await jwtService.checkToken(refreshToken)
         const userId = payload.userId
-        return await sessionQueryRepo.getActiveSessions(userId);
+        return await this.sessionQueryRepo.getActiveSessions(userId);
 
     }
-};
+}

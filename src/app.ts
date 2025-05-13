@@ -1,14 +1,14 @@
 import express from "express";
-import {blogsRouter} from "./controllers/blogsController";
-import {postsRouter} from "./controllers/postsController";
-import {usersRouter} from "./controllers/userController";
 import {testRouter} from "./controllers/testingController";
 import {SETTINGS} from "./settings";
-import {authRouter} from "./controllers/authController";
-import {commentsRouter} from "./controllers/commentsController";
 import {errorHandlerMiddleware} from "./middlewares/errorHandlerMiddleware";
 import cookieParser from "cookie-parser";
-import {securityRouter} from "./controllers/securityController";
+import { usersRouter } from "./routs/userRouts";
+import {authRouter} from "./routs/authRouts";
+import {blogsRouter} from "./routs/blogRouts";
+import {postsRouter} from "./routs/postRouts";
+import {commentsRouter} from "./routs/commentRouts";
+import {securityRouter} from "./routs/securityRouts";
 
 export const app = express();
 app.use(express.json());

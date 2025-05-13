@@ -1,14 +1,16 @@
 import bcrypt from "bcrypt";
 import {uuid} from "uuidv4";
 import dateFn from 'date-fns'
-import {userRepository} from "../repositories/userRepository";
 import {jwtService} from "./jwtService";
 import {DomainExceptions} from "../helpers/DomainExceptions";
-import {userService} from "./userService";
 import {emailForm, sendEmail} from "./nodemailer.service";
 import {NextFunction} from "express";
-import {sessionRepository} from "../repositories/sessionRepository";
-import {sessionsService} from "./sessionService";
+import {injectable} from "inversify";
+import {UserRepository} from "../repositories/userRepository";
+import {UserService} from "./userService";
+import {SessionRepository} from "../repositories/sessionRepository";
+import {SessionsService} from "./sessionService";
+import "reflect-metadata"
 
 type authUserDTO = {
     loginOrEmail: string;
@@ -23,9 +25,16 @@ type registrationDTO = {
     email: string;
 }
 
-export const authService = {
-    login: async (authData: authUserDTO) => {
-        const user = await userRepository.getUserByLoginOrEmail(
+@injectable()
+export class AuthService {
+    constructor(protected userRepository: UserRepository,
+                protected userService: UserService,
+                protected sessionRepository: SessionRepository,
+                protected sessionsService: SessionsService) {
+    }
+
+    async login(authData: authUserDTO) {
+        const user = await this.userRepository.getUserByLoginOrEmail(
             authData.loginOrEmail
         );
         if (!user) {
@@ -40,11 +49,11 @@ export const authService = {
         }
         const deviceId = uuid()
         const [accessToken, refreshToken] = await Promise.all([
-            jwtService.createJwt(user._id.toString(), deviceId, "10s"),
-            jwtService.createJwt(user._id.toString(), deviceId, "20s"), //сделать отдельн создание
+            jwtService.createJwt(user._id.toString(), deviceId, "20s"),
+            jwtService.createJwt(user._id.toString(), deviceId, "30s"), //сделать отдельн создание
         ])
         const token = jwtService.decodeToken(refreshToken)
-        await sessionRepository.createSession({
+        await this.sessionRepository.createSession({
             userId: user._id.toString(),
             deviceId: deviceId,
             iat: token.iat,
@@ -56,32 +65,34 @@ export const authService = {
             accessToken: accessToken,
             refreshToken: refreshToken
         }
-    },
-    registration: async (userData: registrationDTO) => {
+    }
+
+    async registration(userData: registrationDTO) {
         console.log("authService", userData);
-        const createdUserId = await userService.createUser(userData);
+        const createdUserId = await this.userService.createUser(userData);
         if (!createdUserId) {
             throw new DomainExceptions(500, "user:does not create user")
         }
-        const user = await userService.getUserById(createdUserId);
+        const user = await this.userService.getUserById(createdUserId);
         const confirmCode = user!.emailConfirmation.confirmCode
         const isSendEmail = await sendEmail(userData.email, confirmCode, emailForm.registrationEmail);
         console.log(isSendEmail);
         if (!isSendEmail) {
-            await userRepository.deleteUser(createdUserId);
+            await this.userRepository.deleteUser(createdUserId);
             throw new DomainExceptions(500, "email:does not send email")
         }
         return true;
-    },
-    emailResending: async (email: string) => {
-        const user = await userRepository.getUserByEmail(email);
+    }
+
+    async emailResending(email: string) {
+        const user = await this.userRepository.getUserByEmail(email);
         if (!user) {
-            // throw new DomainExceptions(400, 'email:User with this email not found')
-            return true
+            throw new DomainExceptions(400, 'email:User with this email not found')
+            // return true
         }
         if (user.emailConfirmation.isConfirmed) {
-            // throw new DomainExceptions(400, "email:email already confirmed")
-            return true
+            throw new DomainExceptions(400, "email:email already confirmed")
+            // return true
         }
         const confirmCode = uuid()
         try {
@@ -94,7 +105,7 @@ export const authService = {
                     }),
                     // isConfirmed: false
                 }
-                const res = await userRepository.updateUserCodeConfirmByEmail(email, newUserData)
+                const res = await this.userRepository.updateUserCodeConfirmByEmail(email, newUserData)
                 console.log(res)
                 return true
             }
@@ -105,9 +116,10 @@ export const authService = {
             // return false;
         }
 
-    },
-    confirmation: async (confirmCode: string) => {
-        const user = await userRepository.getUserByConfirmCode(confirmCode);
+    }
+
+    async confirmation(confirmCode: string) {
+        const user = await this.userRepository.getUserByConfirmCode(confirmCode);
         if (!user) {
             throw new DomainExceptions(400, "code:code doesnt exist")
         }
@@ -120,15 +132,16 @@ export const authService = {
         if (user.emailConfirmation.expirationDate < new Date()) {
             throw new DomainExceptions(400, "confirm code is invalid")
         }
-        const result = await userRepository.updateConfirmation(user._id.toString())
+        const result = await this.userRepository.updateConfirmation(user._id.toString())
         return !!result
-    },
-    updateRefreshToken: async (refreshToken: string, ip: string, next: NextFunction) => {
+    }
+
+    async updateRefreshToken(refreshToken: string, ip: string, next: NextFunction) {
         try {
             const payload = await jwtService.checkToken(refreshToken)
             const userId = payload.userId
             const deviceId = payload.deviceId
-            const session = await sessionRepository.getSessionByDeviceId(deviceId);
+            const session = await this.sessionRepository.getSessionByDeviceId(deviceId);
             if (!session || Number(session.exp) < Number(dateFn.getUnixTime(new Date()))) {
                 throw new DomainExceptions(401, "refresh-token:invalid or expired")
             }
@@ -136,12 +149,12 @@ export const authService = {
                 throw new DomainExceptions(401, "refresh-token:invalid token version")
             }
             const [accessToken, newRefreshToken] = await Promise.all([
-                jwtService.createJwt(userId, deviceId, "10s"),
                 jwtService.createJwt(userId, deviceId, "20s"),
+                jwtService.createJwt(userId, deviceId, "30s"),
             ])
             const token = jwtService.decodeToken(newRefreshToken)
-            
-            await sessionRepository.updateSession(deviceId, {
+
+            await this.sessionRepository.updateSession(deviceId, {
                 iat: token.iat,
                 exp: token.exp,
                 ip: ip
@@ -156,12 +169,13 @@ export const authService = {
             next(err)
             return
         }
-    },
-    logout: async (refreshToken: string, next: NextFunction) => {
+    }
+
+    async logout(refreshToken: string, next: NextFunction) {
         try {
             const payload = await jwtService.checkToken(refreshToken)
             const deviceId = payload.deviceId
-            const session = await sessionRepository.getSessionByDeviceId(deviceId);
+            const session = await this.sessionRepository.getSessionByDeviceId(deviceId);
             if (!session || Number(session.exp) < Number(dateFn.getUnixTime(new Date()))) {
                 throw new DomainExceptions(401, "refresh-token:invalid or expired")
             }
@@ -169,7 +183,7 @@ export const authService = {
                 throw new DomainExceptions(401, "refresh-token:invalid token version")
             }
 
-            await sessionsService.deleteSessionByDeviceId(refreshToken, deviceId)
+            await this.sessionsService.deleteSessionByDeviceId(refreshToken, deviceId)
             return true
         } catch (err) {
             console.log("failed to logout", err);
@@ -177,4 +191,4 @@ export const authService = {
             return false
         }
     }
-};
+}

@@ -3,6 +3,8 @@ import { userSchemaDB, usersCollection } from "../db/db_connection";
 import { userViewModel } from "../db/db_connection";
 import { PaginationParams } from "../helpers/pagination";
 import {DomainExceptions} from "../helpers/DomainExceptions";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
 type pagingMapDTO = {
   totalCount: number;
@@ -11,8 +13,9 @@ type pagingMapDTO = {
   items: userSchemaDB[];
 };
 
-export const userQueryRepo = {
-  getUserById: async (id: string): Promise<userViewModel> => {
+@injectable()
+export class UserQueryRepo  {
+  async getUserById  (id: string): Promise<userViewModel> {
     const user = await usersCollection.findOne({ _id: new ObjectId(id) });
     if(!user) {throw new DomainExceptions(404, 'User not found')}
     return {
@@ -21,15 +24,15 @@ export const userQueryRepo = {
       email: user.accountData.email,
       createdAt: user.accountData.createdAt.toISOString(),
     };
-  },
-  getUsers: async ({
+  }
+  async getUsers({
     pageNumber,
     pageSize,
     sortBy,
     sortDirection,
     searchLoginTerm,
     searchEmailTerm,
-  }: PaginationParams) => {
+  }: PaginationParams) {
     const filter: any = {};
     if (searchLoginTerm || searchEmailTerm) {
       const orConditions = [];
@@ -59,8 +62,8 @@ export const userQueryRepo = {
       usersCollection.countDocuments(filter),
     ]);
     return mapUsersWithPaging({ totalCount, pageSize, pageNumber, items });
-  },
-};
+  }
+}
 
 function mapUserToViewModel(user: userSchemaDB): userViewModel {
   return {

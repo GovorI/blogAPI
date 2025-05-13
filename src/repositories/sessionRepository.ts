@@ -1,6 +1,8 @@
 import {ObjectId} from "mongodb";
 import {sessionsCollection} from "../db/db_connection";
 import {DomainExceptions} from "../helpers/DomainExceptions";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
 export type createSessionDTO = {
     userId: string,
@@ -17,9 +19,9 @@ export type updateSessionDTO = {
     ip: string
 }
 
-
-export const sessionRepository = {
-    createSession: async (sessionData: createSessionDTO) => {
+@injectable()
+export class SessionRepository {
+    async createSession(sessionData: createSessionDTO) {
         return await sessionsCollection.insertOne({
             _id: new ObjectId(),
             userId: sessionData.userId,
@@ -29,11 +31,13 @@ export const sessionRepository = {
             ip: sessionData.ip,
             exp: sessionData.exp
         })
-    },
-    getSessionByDeviceId: async (deviceId: string) => {
+    }
+
+    async getSessionByDeviceId(deviceId: string) {
         return await sessionsCollection.findOne({deviceId});
-    },
-    updateSession: async (deviceId: string, updateSession: updateSessionDTO) => {
+    }
+
+    async updateSession(deviceId: string, updateSession: updateSessionDTO) {
         return await sessionsCollection.updateOne(
             {deviceId: deviceId},
             {
@@ -44,8 +48,9 @@ export const sessionRepository = {
                 }
             }
         )
-    },
-    deleteAllSessionsExceptActive: async (userId: string, activeDeviceId: string) => {
+    }
+
+    async deleteAllSessionsExceptActive(userId: string, activeDeviceId: string) {
         const sessions = await sessionsCollection.find({userId: userId}).toArray();
         const activeSessionExists = sessions.some(session => {
             return session.deviceId === activeDeviceId
@@ -58,13 +63,14 @@ export const sessionRepository = {
             deviceId: {$ne: activeDeviceId},
         })
         return result.deletedCount > 0
-    },
-    deleteSessionByDeviceId: async (userId: string, device_Id: string) => {
+    }
+
+    async deleteSessionByDeviceId(userId: string, device_Id: string) {
         const session = await sessionsCollection.findOne({deviceId: device_Id})
-        if(!session){
+        if (!session) {
             throw new DomainExceptions(404, 'session:session not found')
         }
-        if(session.userId !== userId){
+        if (session.userId !== userId) {
             throw new DomainExceptions(403, 'forbidden:user not owner session')
         }
         const result = await sessionsCollection.deleteOne({

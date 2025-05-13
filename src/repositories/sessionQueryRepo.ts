@@ -1,8 +1,10 @@
 import {sessionSchemaDB, sessionsCollection, sessionViewModel} from "../db/db_connection";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
-
-export const sessionQueryRepo = {
-    getActiveSessions: async (userId: string): Promise<sessionViewModel[]> => {
+@injectable()
+export class SessionQueryRepo {
+    async getActiveSessions(userId: string): Promise<sessionViewModel[]> {
         const sessions = await sessionsCollection.find({userId: userId}).toArray()
         return sessions.map((session: sessionSchemaDB): sessionViewModel => {
             return {
@@ -12,5 +14,5 @@ export const sessionQueryRepo = {
                 title: session.deviceName,
             }
         })
-    },
+    }
 }

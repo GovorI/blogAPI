@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { body, param } from "express-validator";
 import { SETTINGS } from "../settings";
 import { isValidObjectId } from "mongoose";
-import {userRepository} from "../repositories/userRepository";
 
 const ADMIN_AUTH = SETTINGS.ADMIN_AUTH;
 

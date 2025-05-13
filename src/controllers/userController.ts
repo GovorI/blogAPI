@@ -1,20 +1,16 @@
-import {NextFunction, Request, Response, Router} from "express";
-import { userService } from "../services/userService";
-import { userQueryRepo } from "../repositories/userQueryRepo";
-import {
-  authBaseMiddleware,
-  emailValidator,
-  loginValidator,
-  passwordValidator,
-  userIdValidator,
-} from "../validators/authValidator";
-import { inputCheckErrorsMiddleware } from "../validators/inputCheckErrorsMiddleware";
+import {NextFunction, Request, Response} from "express";
+import {UserService } from "../services/userService";
+import {UserQueryRepo } from "../repositories/userQueryRepo";
 import { paginationQueries } from "../helpers/pagination";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
-export const usersRouter = Router();
 
-const userController = {
-  getUsers: async (req: Request, res: Response) => {
+@injectable()
+export class UserController  {
+  constructor(protected userService: UserService, protected userQueryRepo: UserQueryRepo) {
+  }
+  async getUsers  (req: Request, res: Response) {
     try {
       const {
         pageNumber,
@@ -24,7 +20,7 @@ const userController = {
         searchLoginTerm,
         searchEmailTerm,
       } = paginationQueries(req);
-      const users = await userQueryRepo.getUsers({
+      const users = await this.userQueryRepo.getUsers({
         pageNumber,
         pageSize,
         sortBy,
@@ -37,21 +33,21 @@ const userController = {
     } catch (error) {
       throw new Error("Internal server error");
     }
-  },
-  createUser: async (req: Request, res: Response, next: NextFunction) => {
+  }
+  async createUser  (req: Request, res: Response, next: NextFunction){
     try {
       const { login, password, email } = req.body;
-      const userId = await userService.createUser({ login, password, email, isConfirmed: true });
-      const user = await userQueryRepo.getUserById(userId);
+      const userId = await this.userService.createUser({ login, password, email, isConfirmed: true });
+      const user = await this.userQueryRepo.getUserById(userId);
       res.status(201).send(user);
       return
     } catch (error) {
       next(error);
     }
-  },
-  deleteUser: async (req: Request, res: Response, next: NextFunction) => {
+  }
+  async deleteUser  (req: Request, res: Response, next: NextFunction) {
     try {
-      const deletedUser = await userService.deleteUser(req.params.id);
+      const deletedUser = await this.userService.deleteUser(req.params.id);
       if (deletedUser) {
         res.sendStatus(204);
         return;
@@ -61,23 +57,7 @@ const userController = {
     } catch (error) {
       next(error)
     }
-  },
-};
+  }
+}
 
-usersRouter.get("/", userController.getUsers);
-usersRouter.post(
-  "/",
-  authBaseMiddleware,
-  loginValidator,
-  emailValidator,
-  passwordValidator,
-  inputCheckErrorsMiddleware,
-  userController.createUser
-);
-usersRouter.delete(
-  "/:id",
-  authBaseMiddleware,
-  userIdValidator,
-  inputCheckErrorsMiddleware,
-  userController.deleteUser
-);
+

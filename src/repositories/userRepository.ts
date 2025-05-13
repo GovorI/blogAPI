@@ -1,8 +1,11 @@
 import {ObjectId} from "mongodb";
 import {updateUserCodeConfirmByEmail, userSchemaDB, usersCollection} from "../db/db_connection";
+import {injectable} from "inversify";
+import "reflect-metadata"
 
-export const userRepository = {
-    getUserByLoginOrEmail: async (loginOrEmail: string) => {
+@injectable()
+export class UserRepository {
+    async getUserByLoginOrEmail(loginOrEmail: string) {
         const user = await usersCollection
             .find({
                 $or: [
@@ -12,26 +15,32 @@ export const userRepository = {
             })
             .toArray();
         return user[0];
-    },
-    getUserById: async (userId: string) => {
+    }
+
+    async getUserById(userId: string) {
         return await usersCollection.findOne({_id: new ObjectId(userId)});
-    },
-    getUserByEmail: async (email: string) => {
+    }
+
+    async getUserByEmail(email: string) {
         const res = await usersCollection.findOne({"accountData.email": email});
         return res;
-    },
-    getUserByLogin: async (login: string) => {
+    }
+
+    async getUserByLogin(login: string) {
         const res = await usersCollection.findOne({"accountData.login": login});
         console.log("userRepository.getUserByLogin", res);
         return res;
-    },
-    getUserByConfirmCode: async (confirmCode: string) => {
+    }
+
+    async getUserByConfirmCode(confirmCode: string) {
         return await usersCollection.findOne({'emailConfirmation.confirmCode': confirmCode});
-    },
-    getUserByRefreshToken: async (refreshToken: string) => {
+    }
+
+    async getUserByRefreshToken(refreshToken: string) {
         return await usersCollection.findOne({'auth.refreshToken': refreshToken});
-    },
-    createUser: async (userData: userSchemaDB) => {
+    }
+
+    async createUser(userData: userSchemaDB) {
         const res = await usersCollection.insertOne({
             _id: userData._id,
             accountData: {
@@ -48,8 +57,9 @@ export const userRepository = {
 
         });
         return res.insertedId;
-    },
-    updateUserCodeConfirmByEmail: async (email: string, newUserData: updateUserCodeConfirmByEmail) => {
+    }
+
+    async updateUserCodeConfirmByEmail(email: string, newUserData: updateUserCodeConfirmByEmail) {
         return await usersCollection.updateOne(
             {'accountData.email': email},
             {
@@ -60,22 +70,25 @@ export const userRepository = {
                 }
             }
         )
-    },
-    updateConfirmation: async (id: string) => {
+    }
+
+    async updateConfirmation(id: string) {
         return await usersCollection.updateOne(
             {_id: new ObjectId(id)},
             {$set: {"emailConfirmation.isConfirmed": true}}
         )
-    },
-    setRefreshToken: async (userId: string, refreshToken: string | null) => {
+    }
+
+    async setRefreshToken(userId: string, refreshToken: string | null) {
         return await usersCollection.updateOne(
             {_id: new ObjectId(userId)},
             {$set: {"auth.refreshToken": refreshToken}},
         )
-    },
-    deleteUser: async (id: string) => {
+    }
+
+    async deleteUser(id: string) {
         const res = await usersCollection.deleteOne({_id: new ObjectId(id)});
         if (res.deletedCount === 1) return true;
         return false;
-    },
-};
+    }
+}
