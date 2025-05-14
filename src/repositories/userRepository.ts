@@ -1,5 +1,10 @@
 import {ObjectId} from "mongodb";
-import {updateUserCodeConfirmByEmail, userSchemaDB, usersCollection} from "../db/db_connection";
+import {
+    recoveryPasswordData,
+    updateUserCodeConfirmByEmail,
+    userSchemaDB,
+    usersCollection
+} from "../db/db_connection";
 import {injectable} from "inversify";
 import "reflect-metadata"
 
@@ -68,6 +73,34 @@ export class UserRepository {
                     'emailConfirmation.expirationDate': newUserData.expirationDate,
 
                 }
+            }
+        )
+    }
+
+    async setUserPassRecoveryCodeByEmail(email: string, data: recoveryPasswordData) {
+        return await usersCollection.updateOne(
+            {'accountData.email': email},
+            {
+                $set: {
+                    'recoveryPassword.recoveryPasswordCode': data.recoveryPasswordCode,
+                    'recoveryPassword.expirationDate': data.expirationDate,
+
+                }
+            }
+        )
+    }
+
+    async getUserByPassRecoveryCode(recoveryCode: string) {
+        return await usersCollection.findOne(
+            {"recoveryPassword.recoveryPasswordCode": recoveryCode},
+        )
+    }
+
+    async updateUserPasswordByRecoveryCode(newPassword: string, recoveryCode: string) {
+        return await usersCollection.updateOne(
+            {"recoveryPassword.recoveryPasswordCode": recoveryCode},
+            {
+                $set: {"accountData.password": newPassword},
             }
         )
     }

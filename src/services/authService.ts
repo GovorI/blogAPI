@@ -84,6 +84,29 @@ export class AuthService {
         return true;
     }
 
+    async emailForPassRecovery(email: string) {
+        const user = await this.userRepository.getUserByEmail(email);
+        const resetCode = uuid()
+        try {
+            const isSendEmail = sendEmail(email, resetCode, emailForm.passwordRecoveryEmail)
+            // if(isSendEmail){
+            const recoveryData = {
+                recoveryPasswordCode: resetCode,
+                expirationDate: dateFn.add(new Date(), {
+                    hours: 1
+                })
+            }
+            const res = await this.userRepository.setUserPassRecoveryCodeByEmail(email, recoveryData)
+            console.log(res)
+            return true
+            // }
+            // return false
+        } catch (err) {
+            console.log(err)
+            return false
+        }
+    }
+
     async emailResending(email: string) {
         const user = await this.userRepository.getUserByEmail(email);
         if (!user) {
@@ -134,6 +157,22 @@ export class AuthService {
         }
         const result = await this.userRepository.updateConfirmation(user._id.toString())
         return !!result
+    }
+
+    async setNewPassword(newPassword: string, recoveryCode: string) {
+        const user = await this.userRepository.getUserByPassRecoveryCode(recoveryCode)
+        if (!user) {
+            throw new DomainExceptions(400, "recoveryCode:does not exist")
+        }
+        if (user.recoveryPassword!.expirationDate < new Date()) {
+            throw new DomainExceptions(400, "recoveryCode:recoveryCode code is invalid")
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const isDone = await this.userRepository.updateUserPasswordByRecoveryCode(hashedPassword, recoveryCode);
+        if (isDone) {
+            return true
+        }
+        return false
     }
 
     async updateRefreshToken(refreshToken: string, ip: string, next: NextFunction) {

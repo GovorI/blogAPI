@@ -62,6 +62,32 @@ export class AuthController {
             next(error)
         }
     }
+    async recoveryPassword (req: Request, res: Response, next: NextFunction) {
+        try{
+            const email = req.body.email
+            const isResending =  this.authService.emailForPassRecovery(email)
+            // if (isResending) {
+            //     res.sendStatus(204)
+            //     return;
+            // }
+            res.sendStatus(204)
+            return;
+        }catch(err){
+            next(err)
+        }
+    }
+    async setNewPassword(req: Request, res: Response, next: NextFunction) {
+        try{
+            const newPassword = req.body.newPassword
+            const recoveryCode = req.body.recoveryCode
+            const isDone = await this.authService.setNewPassword(newPassword, recoveryCode)
+            if(isDone){
+                res.sendStatus(204)
+            }
+        }catch (e) {
+            next(e)
+        }
+    }
     async emailResending(req: Request, res: Response, next: NextFunction) {
         try {
             const email = req.body.email;

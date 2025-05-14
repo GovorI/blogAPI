@@ -27,11 +27,20 @@ export type userSchemaDB = {
         confirmCode: string,
         expirationDate: Date,
         isConfirmed: boolean
+    },
+    recoveryPassword?: {
+        recoveryPasswordCode: string;
+        expirationDate: Date,
     }
 };
 
 export type updateUserCodeConfirmByEmail = {
     confirmCode: string;
+    expirationDate: Date;
+}
+
+export type recoveryPasswordData = {
+    recoveryPasswordCode: string;
     expirationDate: Date;
 }
 

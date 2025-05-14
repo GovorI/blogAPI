@@ -1,8 +1,8 @@
 import {
     confirmCodeValidator,
     emailValidator, loginOrEmailValidator,
-    loginValidator,
-    passwordValidator,
+    loginValidator, newPasswordValidator,
+    passwordValidator, recoveryPassCodeValidator,
 } from "../validators/authValidator";
 import {inputCheckErrorsMiddleware} from "../validators/inputCheckErrorsMiddleware";
 import {Router} from "express";
@@ -24,6 +24,10 @@ authRouter.post(
     authController.login.bind(authController)
 );
 authRouter.get("/me", authJWTMiddlewareCreator(), authController.me.bind(authController));
+authRouter.post("/password-recovery", rateLimitMiddlewareCreator(5, 10000),
+    emailValidator, inputCheckErrorsMiddleware, authController.recoveryPassword.bind(authController));
+authRouter.post("/new-password", rateLimitMiddlewareCreator(5, 10000),
+    newPasswordValidator, recoveryPassCodeValidator, inputCheckErrorsMiddleware, authController.setNewPassword.bind(authController));
 authRouter.post('/registration', rateLimitMiddlewareCreator(5, 10000),
     loginValidator, passwordValidator, emailValidator, inputCheckErrorsMiddleware, authController.registration.bind(authController))
 authRouter.post('/registration-confirmation', rateLimitMiddlewareCreator(5, 10000),
